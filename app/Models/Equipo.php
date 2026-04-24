@@ -9,6 +9,25 @@ class Equipo extends Model
 {
     use HasFactory;
 
-    // Con esto le decimos a Laravel qué columnas de la base de datos de tu amigo podemos rellenar
-    protected $fillable = ['nombre', 'logo_url', 'id_capitan', 'puntos_sancion']; 
+    protected $fillable = ['nombre', 'logo_url', 'id_capitan', 'puntos_sancion'];
+
+    public function capitan()
+    {
+        return $this->belongsTo(Usuario::class, 'id_capitan');
+    }
+
+    public function partidosLocal()
+    {
+        return $this->hasMany(Partido::class, 'id_local');
+    }
+
+    public function partidosVisitante()
+    {
+        return $this->hasMany(Partido::class, 'id_visitante');
+    }
+
+    public function plantilla()
+    {
+        return $this->hasMany(PlantillaJugador::class, 'id_equipo');
+    }
 }

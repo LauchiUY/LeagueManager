@@ -37,12 +37,28 @@
                     <li class="nav-item">
                         <a class="nav-link" href="/"><i class="bi bi-house-fill me-1"></i>Inicio</a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ route('clasificacion.competiciones') }}"><i class="bi bi-bar-chart-fill me-1"></i>Clasificación</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ route('equipos.index') }}"><i class="bi bi-people-fill me-1"></i>Equipos</a>
-                    </li>
+                    @auth
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ route('clasificacion.competiciones') }}"><i class="bi bi-bar-chart-fill me-1"></i>Clasificación</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ route('equipos.index') }}"><i class="bi bi-people-fill me-1"></i>Equipos</a>
+                        </li>
+                    @endauth
+                    @guest
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ route('login') }}"><i class="bi bi-box-arrow-in-right me-1"></i>Ingresar</a>
+                        </li>
+                    @else
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                                <i class="bi bi-box-arrow-right me-1"></i>Salir ({{ Auth::user()->nombre }})
+                            </a>
+                            <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
+                                @csrf
+                            </form>
+                        </li>
+                    @endguest
                 </ul>
             </div>
         </div>

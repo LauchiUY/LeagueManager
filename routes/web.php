@@ -3,19 +3,22 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\EquipoController;
 use App\Http\Controllers\ClasificacionController;
+use App\Http\Controllers\AuthController;
 
 Route::get('/', function () {
     return view('welcome');
 });
 
-// Equipos
-Route::resource('equipos', EquipoController::class);
+Route::middleware(['auth'])->group(function () {
+    // Equipos
+    Route::resource('equipos', EquipoController::class);
 
-// Clasificación y estadísticas (consulta pública)
-Route::get('/clasificacion', [ClasificacionController::class, 'competiciones'])->name('clasificacion.competiciones');
-Route::get('/clasificacion/{competicion}', [ClasificacionController::class, 'index'])->name('clasificacion.index');
-Route::get('/clasificacion/{competicion}/pdf', [ClasificacionController::class, 'exportPdf'])->name('clasificacion.pdf');
-Route::get('/estadisticas/equipo/{equipo}', [ClasificacionController::class, 'estadisticasEquipo'])->name('estadisticas.equipo');
+    // Clasificación y estadísticas
+    Route::get('/clasificacion', [ClasificacionController::class, 'competiciones'])->name('clasificacion.competiciones');
+    Route::get('/clasificacion/{competicion}', [ClasificacionController::class, 'index'])->name('clasificacion.index');
+    Route::get('/clasificacion/{competicion}/pdf', [ClasificacionController::class, 'exportPdf'])->name('clasificacion.pdf');
+    Route::get('/estadisticas/equipo/{equipo}', [ClasificacionController::class, 'estadisticasEquipo'])->name('estadisticas.equipo');
+});
 
 // Ruta para el algoritmo del Calendario (Modificada temporalmente a GET sin middleware para que la pruebes fácilmente)
 Route::get('/admin/generar-calendario/{competicion}', function (\Illuminate\Http\Request $request, $competicion, \App\Services\CalendarioService $calendarioService) {
@@ -68,10 +71,12 @@ Route::get('/admin/test-sanciones', function () {
     ]);
 });
 
-// Ruta temporal simulando el Login
-Route::get('/login', function () {
-    return "¡Te hemos atrapado! El Middleware bloqueó tu acceso y te redirigió a esta pantalla de Login porque no eres Administrador.";
-})->name('login');
+// Rutas de Autenticación
+Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login')->middleware('guest');
+Route::post('/login', [AuthController::class, 'login'])->middleware('guest');
+Route::get('/register', [AuthController::class, 'showRegisterForm'])->name('register')->middleware('guest');
+Route::post('/register', [AuthController::class, 'register'])->middleware('guest');
+Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middleware('auth');
 
 // Ruta protegida por el Middleware que bloquea intrusos
 Route::get('/solo-admins', function () {

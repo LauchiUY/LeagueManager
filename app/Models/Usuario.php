@@ -3,33 +3,42 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
+use Database\Factories\UsuarioFactory;
 
-class Usuario extends Model
+class Usuario extends Authenticatable
 {
-    use HasFactory;
+    use HasFactory, Notifiable;
+
+    protected $table = 'usuarios';
 
     protected $fillable = ['nombre', 'email', 'password', 'telefono', 'rol'];
+    
+    protected $hidden = ['password', 'remember_token'];
 
-    protected $hidden = ['password'];
-
-    public function equipoCapitan()
+    protected static function newFactory()
     {
+        return UsuarioFactory::new();
+    }
+
+    public function equipoCapitan() {
         return $this->hasOne(Equipo::class, 'id_capitan');
     }
 
-    public function plantillas()
-    {
+    public function plantillas() {
         return $this->hasMany(PlantillaJugador::class, 'id_usuario');
     }
 
-    public function eventos()
-    {
+    public function eventos() {
         return $this->hasMany(EventoPartido::class, 'id_jugador');
     }
 
-    public function sanciones()
-    {
+    public function sanciones() {
         return $this->hasMany(Sancion::class, 'id_usuario');
+    }
+
+    public function partidosArbitrados() {
+        return $this->hasMany(Partido::class, 'id_arbitro');
     }
 }

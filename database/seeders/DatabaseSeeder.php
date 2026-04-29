@@ -13,7 +13,7 @@ class DatabaseSeeder extends Seeder
     {
         // ── Usuarios ──────────────────────────────────────────────
         $usuarios = [
-            ['id' => 1,  'nombre' => 'Admin Principal',   'email' => 'admin@leaguemanager.com',    'password' => Hash::make('1234'), 'telefono' => '600111111', 'rol' => 'admin'],
+            ['id' => 1,  'nombre' => 'Administrador',   'email' => 'admin@admin.com',    'password' => Hash::make('admin123'), 'telefono' => '600111111', 'rol' => 'admin'],
             ['id' => 2,  'nombre' => 'Carlos García',     'email' => 'carlos@leaguemanager.com',   'password' => Hash::make('1234'), 'telefono' => '600222222', 'rol' => 'capitan'],
             ['id' => 3,  'nombre' => 'Miguel Torres',     'email' => 'miguel@leaguemanager.com',   'password' => Hash::make('1234'), 'telefono' => '600333333', 'rol' => 'capitan'],
             ['id' => 4,  'nombre' => 'Pablo Ruiz',        'email' => 'pablo@leaguemanager.com',    'password' => Hash::make('1234'), 'telefono' => '600444444', 'rol' => 'capitan'],
@@ -23,7 +23,7 @@ class DatabaseSeeder extends Seeder
             ['id' => 8,  'nombre' => 'Sergio Navarro',    'email' => 'sergio@leaguemanager.com',   'password' => Hash::make('1234'), 'telefono' => '600888888', 'rol' => 'arbitro'],
             ['id' => 9,  'nombre' => 'Raúl Jiménez',      'email' => 'raul@leaguemanager.com',     'password' => Hash::make('1234'), 'telefono' => '600999999', 'rol' => 'arbitro'],
             // Jugadores
-            ['id' => 10, 'nombre' => 'Lucas Pérez',       'email' => 'lucas@leaguemanager.com',    'password' => Hash::make('1234'), 'telefono' => null, 'rol' => 'jugador'],
+            ['id' => 10, 'nombre' => 'Usuario Normal',    'email' => 'user@user.com',              'password' => Hash::make('user123'), 'telefono' => null, 'rol' => 'jugador'],
             ['id' => 11, 'nombre' => 'Iván Sánchez',      'email' => 'ivan@leaguemanager.com',     'password' => Hash::make('1234'), 'telefono' => null, 'rol' => 'jugador'],
             ['id' => 12, 'nombre' => 'Mario Díaz',        'email' => 'mario@leaguemanager.com',    'password' => Hash::make('1234'), 'telefono' => null, 'rol' => 'jugador'],
             ['id' => 13, 'nombre' => 'Álex Moreno',       'email' => 'alex@leaguemanager.com',     'password' => Hash::make('1234'), 'telefono' => null, 'rol' => 'jugador'],

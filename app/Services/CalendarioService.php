@@ -2,88 +2,137 @@
 
 namespace App\Services;
 
-use App\Models\Competicion;
 use App\Models\Partido;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 use Exception;
 
 class CalendarioService
 {
     /**
-     * Genera un calendario automático para la competición usando el algoritmo Round-Robin.
-     * 
-     * @param int $competicionId ID de la competición
-     * @param array $equiposIds Array con los IDs de los equipos participantes
-     * @param string $fechaInicio Fecha del primer partido (Y-m-d)
-     * @return array Resumen de la operación
+     * Genera el calendario de una competición usando el algoritmo Round-Robin (ida y vuelta).
+     *
+     * @param int $competicionId
+     * @param array $idsEquipos
+     * @param string $fechaInicio
+     * @param string $campo
+     * @return array
+     * @throws Exception
      */
-    public function generar(int $competicionId, array $equiposIds, string $fechaInicio)
+    public function generarCalendario(int $competicionId, array $idsEquipos, string $fechaInicio, string $campo = 'Por definir'): array
     {
-        $competicion = Competicion::findOrFail($competicionId);
-        $equipos = $equiposIds;
-        
-        // Si no hay suficientes equipos, lanzar excepción
+        $equipos = $idsEquipos;
+
         if (count($equipos) < 2) {
             throw new Exception("Se necesitan al menos 2 equipos para generar un calendario.");
         }
 
-        // Si el número de equipos es impar, añadimos un equipo "fantasma" (bye)
-        $esImpar = count($equipos) % 2 !== 0;
-        if ($esImpar) {
-            $equipos[] = null; // null representará que el equipo descansa
+        // Si el número de equipos es impar, añadimos un equipo fantasma (null) para los "bye" (descansos)
+        if (count($equipos) % 2 !== 0) {
+            $equipos[] = null;
         }
 
-        $totalEquipos = count($equipos);
-        $totalJornadas = $totalEquipos - 1;
-        $mitad = $totalEquipos / 2;
+        $numEquipos = count($equipos);
+        $totalJornadasIda = $numEquipos - 1;
+        $totalJornadas = $totalJornadasIda * 2;
+        $mitad = $numEquipos / 2;
 
+        $partidosToInsert = [];
         $fechaActual = Carbon::parse($fechaInicio);
-        $partidosCreados = 0;
+        $jornadaGlobal = 1;
 
-        for ($jornada = 1; $jornada <= $totalJornadas; $jornada++) {
+        // Guardamos copia del orden original para poder restaurarlo
+        $equiposOriginal = $equipos;
+
+        // --- PRIMERA VUELTA (IDA) ---
+        for ($j = 0; $j < $totalJornadasIda; $j++) {
             for ($i = 0; $i < $mitad; $i++) {
-                $equipoLocal = $equipos[$i];
-                $equipoVisitante = $equipos[$totalEquipos - 1 - $i];
+                $local = $equipos[$i];
+                $visitante = $equipos[$numEquipos - 1 - $i];
 
-                // Si ninguno de los dos es el equipo fantasma (null), creamos el partido
-                if ($equipoLocal !== null && $equipoVisitante !== null) {
-                    
-                    // Alternar localía en jornadas pares para el primer equipo para que no juegue siempre en casa
-                    if ($i === 0 && $jornada % 2 === 0) {
-                        $temp = $equipoLocal;
-                        $equipoLocal = $equipoVisitante;
-                        $equipoVisitante = $temp;
-                    }
-
-                    Partido::create([
-                        'id_competicion' => $competicion->id,
-                        'id_local' => $equipoLocal,
-                        'id_visitante' => $equipoVisitante,
-                        'jornada' => $jornada,
-                        'fecha_hora' => $fechaActual->copy()->addHours(18), // Ejemplo: Todos los partidos a las 18:00
-                        'campo_pista' => 'Campo Central',
-                        'estado' => 'pendiente',
-                    ]);
-                    $partidosCreados++;
+                // Solo creamos el partido si ninguno de los dos es el equipo fantasma (null)
+                if ($local !== null && $visitante !== null) {
+                    $partidosToInsert[] = [
+                        'id_competicion' => $competicionId,
+                        'id_local'       => $local,
+                        'id_visitante'   => $visitante,
+                        'jornada'        => $jornadaGlobal,
+                        'fecha_hora'     => $fechaActual->copy(),
+                        'campo_pista'    => $campo,
+                        'estado'         => 'programado',
+                        'created_at'     => now(),
+                        'updated_at'     => now(),
+                    ];
                 }
             }
 
-            // Rotar el array de equipos para la siguiente jornada (Round-Robin)
-            // El primer equipo se queda fijo, los demás rotan en el sentido de las agujas del reloj
-            $fijo = $equipos[0];
+            // Algoritmo Round-Robin: rotar los equipos dejando el primero (índice 0) fijo.
             $ultimo = array_pop($equipos);
             array_splice($equipos, 1, 0, [$ultimo]);
-            $equipos[0] = $fijo;
 
-            // Añadir 7 días para la próxima jornada
-            $fechaActual->addDays(7);
+            $jornadaGlobal++;
+            $fechaActual->addWeek();
         }
 
+        // Restauramos el orden para asegurar que los emparejamientos de la vuelta sean exactos
+        $equipos = $equiposOriginal;
+        
+        // --- SEGUNDA VUELTA (VUELTA) ---
+        for ($j = 0; $j < $totalJornadasIda; $j++) {
+            for ($i = 0; $i < $mitad; $i++) {
+                // Invertimos local y visitante para la vuelta
+                $visitante = $equipos[$i];
+                $local = $equipos[$numEquipos - 1 - $i];
+
+                if ($local !== null && $visitante !== null) {
+                    $partidosToInsert[] = [
+                        'id_competicion' => $competicionId,
+                        'id_local'       => $local,
+                        'id_visitante'   => $visitante,
+                        'jornada'        => $jornadaGlobal,
+                        'fecha_hora'     => $fechaActual->copy(),
+                        'campo_pista'    => $campo,
+                        'estado'         => 'programado',
+                        'created_at'     => now(),
+                        'updated_at'     => now(),
+                    ];
+                }
+            }
+
+            // Rotamos igual que en la ida
+            $ultimo = array_pop($equipos);
+            array_splice($equipos, 1, 0, [$ultimo]);
+
+            $jornadaGlobal++;
+            $fechaActual->addWeek();
+        }
+
+        // Insertar todos los partidos de golpe usando transacción
+        DB::transaction(function () use ($partidosToInsert) {
+            Partido::insert($partidosToInsert);
+        });
+
+        // La fecha final será la de la última jornada (le restamos la semana extra que se sumó al final del bucle)
+        $fechaFin = $fechaActual->subWeek()->toDateTimeString();
+
         return [
-            'success' => true,
-            'message' => "Calendario generado exitosamente.",
-            'jornadas' => $totalJornadas,
-            'partidos_creados' => $partidosCreados
+            'total_partidos' => count($partidosToInsert),
+            'total_jornadas' => $totalJornadas,
+            'fecha_inicio'   => $fechaInicio,
+            'fecha_fin'      => $fechaFin,
         ];
+    }
+
+    /**
+     * Elimina todos los partidos de una competición que estén en estado "programado".
+     *
+     * @param int $competicionId
+     * @return int Número de partidos eliminados
+     */
+    public function eliminarCalendario(int $competicionId): int
+    {
+        return Partido::where('id_competicion', $competicionId)
+            ->where('estado', 'programado')
+            ->delete();
     }
 }

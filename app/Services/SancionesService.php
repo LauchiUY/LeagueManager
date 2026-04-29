@@ -3,79 +3,198 @@
 namespace App\Services;
 
 use App\Models\Partido;
-use App\Models\Sancion;
 use App\Models\PlantillaJugador;
+use App\Models\Sancion;
 use App\Models\Equipo;
+use App\Models\Usuario;
+use App\Models\EventoPartido;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Exception;
 
 class SancionesService
 {
     /**
-     * Evalúa un partido para detectar alineaciones indebidas y aplicar sanciones.
-     * 
-     * @param int $partidoId ID del partido a evaluar
-     * @return array Resumen de la auditoría
+     * Evalúa las alineaciones de un partido finalizado.
      */
-    public function evaluarAlineacionesIndebidas(int $partidoId)
+    public function evaluarAlineacionesIndebidas(int $partidoId): array
     {
-        $partido = Partido::with(['eventos', 'equipoLocal', 'equipoVisitante'])->findOrFail($partidoId);
-        
+        $partido = Partido::with(['eventoPartido', 'equipoLocal', 'equipoVisitante'])->findOrFail($partidoId);
+
         if ($partido->estado !== 'finalizado') {
             throw new Exception("El partido debe estar finalizado para evaluar sanciones.");
         }
 
-        // Obtener todos los jugadores únicos que participaron en eventos de este partido
-        $jugadoresParticipantes = $partido->eventos()->whereNotNull('id_jugador')->get()->groupBy('id_jugador');
-        
+        // Obtener IDs de jugadores únicos que participaron en el partido
+        $jugadoresParticipantes = $partido->eventoPartido()
+            ->whereNotNull('id_jugador')
+            ->pluck('id_jugador')
+            ->unique();
+
+        $infraccionesPorEquipo = [
+            $partido->id_local => false,
+            $partido->id_visitante => false,
+        ];
+
         $sancionesAplicadas = 0;
-        $equiposSancionados = [];
+        $infractores = [];
 
-        foreach ($jugadoresParticipantes as $idJugador => $eventos) {
-            // Determinar a qué equipo pertenece este jugador en el partido (basado en el primer evento)
-            // Nota: En una implementación más robusta, el evento guardaría el id_equipo del jugador
-            // Asumiremos que tenemos que buscarlo en las plantillas del equipo local o visitante
-            $enPlantillaLocal = PlantillaJugador::where('id_equipo', $partido->id_local)
-                                                ->where('id_usuario', $idJugador)
-                                                ->exists();
-            
-            $enPlantillaVisitante = PlantillaJugador::where('id_equipo', $partido->id_visitante)
-                                                    ->where('id_usuario', $idJugador)
-                                                    ->exists();
+        DB::beginTransaction();
 
-            if (!$enPlantillaLocal && !$enPlantillaVisitante) {
-                // El jugador participó pero no está en ninguna plantilla de los equipos que juegan
-                // Esto es una ALINEACIÓN INDEBIDA.
-                
-                // Evitar duplicar la sanción si ya se aplicó para este partido y jugador
-                $sancionExistente = Sancion::where('id_usuario', $idJugador)
-                                           ->where('id_partido_origen', $partido->id)
-                                           ->where('motivo', 'Alineación Indebida')
-                                           ->exists();
+        try {
+            foreach ($jugadoresParticipantes as $idJugador) {
+                // Verificar si está inscrito en alguno de los dos equipos
+                $equipoInscrito = PlantillaJugador::where('id_usuario', $idJugador)
+                    ->whereIn('id_equipo', [$partido->id_local, $partido->id_visitante])
+                    ->value('id_equipo');
 
-                if (!$sancionExistente) {
-                    // Sancionar al jugador (ej. 1 partido de suspensión)
-                    Sancion::create([
-                        'id_usuario' => $idJugador,
-                        'id_partido_origen' => $partido->id,
-                        'partidos_suspension' => 1,
-                        'motivo' => 'Alineación Indebida',
-                        'estado' => 'activa'
-                    ]);
-                    $sancionesAplicadas++;
+                $esNoInscrito = is_null($equipoInscrito);
 
-                    // Sancionar al equipo (quitamos puntos de sanción, en este caso sumamos al contador de castigo)
-                    // Para saber qué equipo castigar, necesitaríamos saber con quién jugó. 
-                    // Por simplicidad, castigamos al equipo local si no está en el visitante y viceversa.
-                    // Si no podemos determinarlo, requerirá ajuste manual, pero aplicaremos la lógica a los dos si hay duda (o se puede mejorar).
-                    // Asumiremos que el frontend envió el id_equipo en el evento. Si no, lo marcamos como incidente grave.
+                // Verificar si tenía sanción activa al momento de jugar
+                $tieneSancionActiva = Sancion::where('id_usuario', $idJugador)
+                    ->where('estado', 'activa')
+                    ->where('id_partido_origen', '!=', $partidoId)
+                    ->exists();
+
+                if (!$esNoInscrito && !$tieneSancionActiva) {
+                    continue; // El jugador está en regla
+                }
+
+                if ($esNoInscrito) {
+                    $motivo = 'Alineación Indebida: jugador no inscrito en ningún equipo';
+                    $equipoInfractor = null; // No se puede saber con certeza el equipo exacto si no está en plantillas
+                } else {
+                    $motivo = 'Alineación Indebida: jugador con sanción activa';
+                    $equipoInfractor = $equipoInscrito;
+                }
+
+                // Crear sanción
+                Sancion::create([
+                    'id_usuario' => $idJugador,
+                    'id_partido_origen' => $partidoId,
+                    'partidos_suspension' => 1,
+                    'motivo' => $motivo,
+                    'estado' => 'activa',
+                ]);
+
+                $sancionesAplicadas++;
+                $infractores[] = [
+                    'id_jugador' => $idJugador,
+                    'equipo_infractor' => $equipoInfractor,
+                    'motivo' => $motivo,
+                ];
+
+                if ($equipoInfractor) {
+                    $infraccionesPorEquipo[$equipoInfractor] = true;
+                }
+            }
+
+            // Aplicar castigos a los equipos si hubo infracciones
+            $huboCastigoLocal = $infraccionesPorEquipo[$partido->id_local];
+            $huboCastigoVisitante = $infraccionesPorEquipo[$partido->id_visitante];
+
+            if ($huboCastigoLocal || $huboCastigoVisitante) {
+                if ($huboCastigoLocal && !$huboCastigoVisitante) {
+                    // Local pierde 3-0
+                    $partido->goles_local = 0;
+                    $partido->goles_visitante = 3;
+                    Equipo::where('id', $partido->id_local)->increment('puntos_sancion', 1);
+                } elseif ($huboCastigoVisitante && !$huboCastigoLocal) {
+                    // Visitante pierde 3-0
+                    $partido->goles_local = 3;
+                    $partido->goles_visitante = 0;
+                    Equipo::where('id', $partido->id_visitante)->increment('puntos_sancion', 1);
+                } else {
+                    // Ambos infractores
+                    $partido->goles_local = 0;
+                    $partido->goles_visitante = 0;
+                    Equipo::where('id', $partido->id_local)->increment('puntos_sancion', 1);
+                    Equipo::where('id', $partido->id_visitante)->increment('puntos_sancion', 1);
+                }
+                $partido->save();
+            }
+
+            if ($sancionesAplicadas > 0) {
+                $this->notificarAdmin($partido, $infractores);
+            }
+
+            DB::commit();
+
+            return [
+                'success' => true,
+                'message' => $sancionesAplicadas > 0 ? "Infracciones detectadas. Resultado revertido y sanciones aplicadas." : "Auditoría completada sin infracciones.",
+                'sanciones_aplicadas' => $sancionesAplicadas,
+                'infractores' => $infractores,
+            ];
+
+        } catch (Exception $e) {
+            DB::rollBack();
+            Log::error("Error evaluando alineaciones para el partido {$partidoId}: " . $e->getMessage());
+            throw $e;
+        }
+    }
+
+    /**
+     * Aplica sanción automática por tarjeta roja (1 partido de suspensión).
+     */
+    public function aplicarSancionTarjetaRoja(int $idJugador, int $idPartido): Sancion
+    {
+        return Sancion::firstOrCreate(
+            [
+                'id_usuario' => $idJugador,
+                'id_partido_origen' => $idPartido,
+                'motivo' => 'Tarjeta roja',
+            ],
+            [
+                'partidos_suspension' => 1,
+                'estado' => 'activa',
+            ]
+        );
+    }
+
+    /**
+     * Avanza el contador de partidos cumplidos de todas las sanciones activas
+     * de los jugadores que participaron en un partido.
+     */
+    public function avanzarSancionesCumplidas(int $partidoId): void
+    {
+        $jugadores = EventoPartido::where('id_partido', $partidoId)
+            ->whereNotNull('id_jugador')
+            ->pluck('id_jugador')
+            ->unique();
+
+        foreach ($jugadores as $idJugador) {
+            $sanciones = Sancion::where('id_usuario', $idJugador)
+                ->where('estado', 'activa')
+                ->get();
+
+            foreach ($sanciones as $sancion) {
+                $sancion->increment('partidos_cumplidos');
+                $sancion->refresh();
+
+                if ($sancion->partidos_cumplidos >= $sancion->partidos_suspension) {
+                    $sancion->update(['estado' => 'cumplida']);
                 }
             }
         }
+    }
 
-        return [
-            'success' => true,
-            'message' => "Auditoría del partido completada.",
-            'sanciones_aplicadas' => $sancionesAplicadas
-        ];
+    /**
+     * Notifica al admin con una alerta crítica.
+     */
+    private function notificarAdmin(Partido $partido, array $infractores): void
+    {
+        $admin = Usuario::where('rol', 'admin')->first();
+
+        if ($admin) {
+            $detalle = collect($infractores)
+                ->map(fn($infractor) => "Jugador #{$infractor['id_jugador']}: {$infractor['motivo']}")
+                ->join(' | ');
+
+            Log::warning("⚠️ ALERTA CRÍTICA — Partido #{$partido->id}: {$detalle}");
+
+            // TODO: Conectar sistema de notificaciones real
+            // $admin->notify(new \App\Notifications\AlineacionIndebidaNotification($partido, $infractores));
+        }
     }
 }

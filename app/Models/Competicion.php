@@ -17,4 +17,9 @@ class Competicion extends Model
     {
         return $this->hasMany(Partido::class, 'id_competicion');
     }
+
+    public function equipos()
+    {
+        return $this->belongsToMany(Equipo::class, 'competicion_equipo', 'id_competicion', 'id_equipo')->withTimestamps();
+    }
 }

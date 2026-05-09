@@ -30,4 +30,9 @@ class Equipo extends Model
     {
         return $this->hasMany(PlantillaJugador::class, 'id_equipo');
     }
+
+    public function competiciones()
+    {
+        return $this->belongsToMany(Competicion::class, 'competicion_equipo', 'id_equipo', 'id_competicion')->withTimestamps();
+    }
 }

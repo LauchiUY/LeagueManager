@@ -6,6 +6,7 @@ use App\Http\Controllers\ClasificacionController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\PartidoController;
 use App\Http\Controllers\CapitanController;
+use App\Http\Controllers\AdminController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -42,55 +43,21 @@ Route::middleware(['auth', 'role:capitan,admin'])->prefix('capitan')->name('capi
     Route::post('/partido/{id}/aplazar', [CapitanController::class, 'solicitarAplazamiento'])->name('aplazar');
 });
 
-// Ruta para el algoritmo del Calendario (Modificada temporalmente a GET sin middleware para que la pruebes fácilmente)
-Route::get('/admin/generar-calendario/{competicion}', function (\Illuminate\Http\Request $request, $competicion, \App\Services\CalendarioService $calendarioService) {
-    // Por simplicidad en la prueba, tomaremos todos los equipos de la base de datos
-    $equiposIds = \App\Models\Equipo::pluck('id')->toArray();
+// Rutas del Administrador
+Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/', [AdminController::class, 'dashboard'])->name('dashboard');
+    Route::get('/competiciones', [AdminController::class, 'competiciones'])->name('competiciones');
+    Route::post('/competiciones/{id}/equipos', [AdminController::class, 'asignarEquipos'])->name('competiciones.equipos');
+    Route::post('/competiciones/{id}/calendario', [AdminController::class, 'generarCalendario'])->name('competiciones.calendario');
     
-    // Asignar la fecha de inicio recibida o la fecha actual por defecto
-    $fechaInicio = $request->input('fecha_inicio', now()->format('Y-m-d'));
-
-    try {
-        $resultado = $calendarioService->generarCalendario($competicion, $equiposIds, $fechaInicio);
-        return response()->json($resultado);
-    } catch (\Exception $e) {
-        return response()->json(['success' => false, 'error' => $e->getMessage()], 400);
-    }
-})->name('admin.calendario.generar');
-
-// Ruta temporal para probar las sanciones automáticas
-Route::get('/admin/test-sanciones', function () {
-    // 1. Agarramos el primer partido que generaste antes y lo marcamos como finalizado
-    $partido = \App\Models\Partido::first();
-    if (!$partido) return "Primero debes generar el calendario.";
+    Route::get('/partidos', [AdminController::class, 'partidos'])->name('partidos');
+    Route::post('/partidos/{id}/arbitro', [AdminController::class, 'asignarArbitro'])->name('partidos.arbitro');
     
-    $partido->update(['estado' => 'finalizado']);
-
-    // 2. Creamos un jugador falso (Alineación Indebida)
-    $jugadorIlegal = \App\Models\Usuario::create([
-        'nombre' => 'Jugador Falso (No Inscrito)',
-        'email' => 'falso' . rand(1, 1000) . '@test.com',
-        'password' => bcrypt('password'),
-        'rol' => 'jugador'
-    ]);
-
-    // 3. Añadimos un evento a este partido diciendo que este jugador jugó (ej. metió gol)
-    \App\Models\EventoPartido::create([
-        'id_partido' => $partido->id,
-        'id_jugador' => $jugadorIlegal->id,
-        'tipo_evento' => 'gol',
-        'minuto' => 45
-    ]);
-
-    // 4. Ejecutamos el comando automático de sanciones
-    \Illuminate\Support\Facades\Artisan::call('competicion:evaluar-sanciones');
+    Route::get('/sanciones', [AdminController::class, 'sanciones'])->name('sanciones');
+    Route::post('/sanciones/crear', [AdminController::class, 'crearSancion'])->name('sanciones.crear');
     
-    // 5. Mostramos el resultado
-    return response()->json([
-        'mensaje' => 'Simulación ejecutada con éxito.',
-        'log_de_consola' => \Illuminate\Support\Facades\Artisan::output(),
-        'sanciones_creadas' => \App\Models\Sancion::with('usuario')->get()
-    ]);
+    Route::get('/aplazamientos', [AdminController::class, 'aplazamientos'])->name('aplazamientos');
+    Route::post('/aplazamientos/{id}/gestionar', [AdminController::class, 'gestionarAplazamiento'])->name('aplazamientos.gestionar');
 });
 
 // Rutas de Autenticación

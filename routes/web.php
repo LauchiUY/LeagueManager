@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\EquipoController;
 use App\Http\Controllers\ClasificacionController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\PartidoController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -20,6 +21,15 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/estadisticas/equipo/{equipo}', [ClasificacionController::class, 'estadisticasEquipo'])->name('estadisticas.equipo');
 });
 
+// Rutas del Árbitro (Panel de Actas)
+Route::middleware(['auth', 'role:arbitro,admin'])->group(function () {
+    Route::get('/partidos', [PartidoController::class, 'index'])->name('partidos.index');
+    Route::get('/partidos/{id}', [PartidoController::class, 'show'])->name('partidos.show');
+    Route::post('/partidos/{id}/evento', [PartidoController::class, 'registrarEvento'])->name('partidos.evento.store');
+    Route::post('/partidos/{id}/validar', [PartidoController::class, 'validarActa'])->name('partidos.validar');
+    Route::post('/partidos/{id}/acta', [PartidoController::class, 'subirFotoActa'])->name('partidos.acta.upload');
+});
+
 // Ruta para el algoritmo del Calendario (Modificada temporalmente a GET sin middleware para que la pruebes fácilmente)
 Route::get('/admin/generar-calendario/{competicion}', function (\Illuminate\Http\Request $request, $competicion, \App\Services\CalendarioService $calendarioService) {
     // Por simplicidad en la prueba, tomaremos todos los equipos de la base de datos
@@ -29,7 +39,7 @@ Route::get('/admin/generar-calendario/{competicion}', function (\Illuminate\Http
     $fechaInicio = $request->input('fecha_inicio', now()->format('Y-m-d'));
 
     try {
-        $resultado = $calendarioService->generar($competicion, $equiposIds, $fechaInicio);
+        $resultado = $calendarioService->generarCalendario($competicion, $equiposIds, $fechaInicio);
         return response()->json($resultado);
     } catch (\Exception $e) {
         return response()->json(['success' => false, 'error' => $e->getMessage()], 400);

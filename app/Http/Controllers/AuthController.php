@@ -47,7 +47,15 @@ class AuthController extends Controller
         if (Auth::attempt($credentials, $request->boolean('remember'))) {
             $request->session()->regenerate();
 
-            return redirect()->intended('/')->with('success', '¡Bienvenido de nuevo!');
+            // Redirigir al panel correspondiente según el rol
+            $ruta = match(Auth::user()->rol) {
+                'admin'   => route('admin.dashboard'),
+                'capitan' => route('capitan.equipo'),
+                'arbitro' => route('partidos.index'),
+                default   => route('clasificacion.competiciones'),
+            };
+
+            return redirect()->intended($ruta)->with('success', '¡Bienvenido de nuevo!');
         }
 
         return back()->withErrors([

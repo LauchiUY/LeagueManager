@@ -11,15 +11,17 @@
         :root {
             --lm-primary: #dc3545;
             --lm-dark: #1a1a2e;
+            --lm-darker: #121225;
             --lm-accent: #e94560;
         }
-        body { background-color: #f0f2f5; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: var(--lm-darker); color: #e0e0e0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; min-height: 100vh; }
         .navbar { background: linear-gradient(135deg, var(--lm-dark) 0%, #16213e 100%) !important; box-shadow: 0 2px 10px rgba(0,0,0,0.3); }
         .navbar-brand { font-weight: 800; font-size: 1.4rem; color: var(--lm-primary) !important; letter-spacing: 1px; }
         .navbar-brand i { margin-right: 6px; }
         .nav-link { color: rgba(255,255,255,0.85) !important; font-weight: 500; transition: color 0.2s; }
         .nav-link:hover { color: var(--lm-primary) !important; }
         .nav-link.active { color: var(--lm-primary) !important; border-bottom: 2px solid var(--lm-primary); }
+        .nav-role-badge { font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; vertical-align: middle; margin-left: 4px; }
         footer { background: var(--lm-dark); color: rgba(255,255,255,0.6); }
         .card { border: none; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
     </style>
@@ -33,7 +35,7 @@
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
+                <ul class="navbar-nav me-auto">
                     <li class="nav-item">
                         <a class="nav-link" href="/"><i class="bi bi-house-fill me-1"></i>Inicio</a>
                     </li>
@@ -44,7 +46,29 @@
                         <li class="nav-item">
                             <a class="nav-link" href="{{ route('equipos.index') }}"><i class="bi bi-people-fill me-1"></i>Equipos</a>
                         </li>
+
+                        {{-- Enlaces específicos por rol --}}
+                        @if(auth()->user()->rol === 'admin')
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ route('admin.dashboard') }}"><i class="bi bi-shield-lock-fill me-1"></i>Panel Admin</a>
+                            </li>
+                        @endif
+
+                        @if(auth()->user()->rol === 'capitan')
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ route('capitan.equipo') }}"><i class="bi bi-flag-fill me-1"></i>Mi Equipo</a>
+                            </li>
+                        @endif
+
+                        @if(auth()->user()->rol === 'arbitro')
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ route('partidos.index') }}"><i class="bi bi-clipboard-check-fill me-1"></i>Mis Partidos</a>
+                            </li>
+                        @endif
                     @endauth
+                </ul>
+
+                <ul class="navbar-nav">
                     @guest
                         <li class="nav-item">
                             <a class="nav-link" href="{{ route('login') }}"><i class="bi bi-box-arrow-in-right me-1"></i>Ingresar</a>
@@ -96,9 +120,18 @@
                             </ul>
                         </li>
                         
+                        <!-- Usuario y Rol -->
                         <li class="nav-item">
                             <a class="nav-link" href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
-                                <i class="bi bi-box-arrow-right me-1"></i>Salir ({{ Auth::user()->nombre }})
+                                <i class="bi bi-box-arrow-right me-1"></i>{{ Auth::user()->nombre }}
+                                <span class="nav-role-badge 
+                                    @if(auth()->user()->rol === 'admin') bg-danger
+                                    @elseif(auth()->user()->rol === 'capitan') bg-warning text-dark
+                                    @elseif(auth()->user()->rol === 'arbitro') bg-info text-dark
+                                    @else bg-secondary
+                                    @endif">
+                                    {{ ucfirst(Auth::user()->rol) }}
+                                </span>
                             </a>
                             <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
                                 @csrf

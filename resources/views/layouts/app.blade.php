@@ -50,6 +50,52 @@
                             <a class="nav-link" href="{{ route('login') }}"><i class="bi bi-box-arrow-in-right me-1"></i>Ingresar</a>
                         </li>
                     @else
+                        <!-- Dropdown de Notificaciones -->
+                        <li class="nav-item dropdown me-2">
+                            <a class="nav-link dropdown-toggle position-relative" href="#" id="notifDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="bi bi-bell-fill"></i>
+                                @if(auth()->user()->unreadNotifications->count() > 0)
+                                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.6rem;">
+                                        {{ auth()->user()->unreadNotifications->count() }}
+                                    </span>
+                                @endif
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="notifDropdown" style="width: 320px; max-height: 400px; overflow-y: auto;">
+                                <li><h6 class="dropdown-header">Notificaciones</h6></li>
+                                @forelse(auth()->user()->notifications->take(5) as $notificacion)
+                                    <li class="dropdown-item py-2 {{ $notificacion->unread() ? 'bg-light' : '' }}">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div class="text-wrap" style="max-width: 250px;">
+                                                <strong class="d-block text-dark" style="font-size: 0.9rem;">
+                                                    @if(isset($notificacion->data['estado']) && $notificacion->data['estado'] === 'aprobado')
+                                                        <i class="bi bi-check-circle-fill text-success"></i>
+                                                    @elseif(isset($notificacion->data['estado']) && $notificacion->data['estado'] === 'rechazado')
+                                                        <i class="bi bi-x-circle-fill text-danger"></i>
+                                                    @else
+                                                        <i class="bi bi-info-circle-fill text-info"></i>
+                                                    @endif
+                                                    {{ $notificacion->data['titulo'] ?? 'Aviso' }}
+                                                </strong>
+                                                <small class="text-secondary" style="font-size: 0.8rem;">
+                                                    {{ $notificacion->data['mensaje'] ?? 'Tienes un nuevo aviso en el sistema.' }}
+                                                </small>
+                                            </div>
+                                            @if($notificacion->unread())
+                                                <form action="{{ route('notificaciones.leer', $notificacion->id) }}" method="POST" class="m-0 p-0">
+                                                    @csrf
+                                                    <button type="submit" class="btn btn-sm btn-link text-primary p-0 m-0" title="Marcar como leída">
+                                                        <i class="bi bi-check2-all fs-5"></i>
+                                                    </button>
+                                                </form>
+                                            @endif
+                                        </div>
+                                    </li>
+                                @empty
+                                    <li><span class="dropdown-item text-secondary text-center">No tienes notificaciones.</span></li>
+                                @endforelse
+                            </ul>
+                        </li>
+                        
                         <li class="nav-item">
                             <a class="nav-link" href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
                                 <i class="bi bi-box-arrow-right me-1"></i>Salir ({{ Auth::user()->nombre }})

@@ -117,3 +117,9 @@ Route::get('/ver-resultados', function () {
     
     return response($html);
 });
+
+// Marcar notificación como leída
+Route::post('/notificaciones/{id}/leer', function ($id) {
+    auth()->user()->notifications()->findOrFail($id)->markAsRead();
+    return back();
+})->name('notificaciones.leer')->middleware('auth');

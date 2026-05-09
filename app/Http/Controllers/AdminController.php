@@ -165,6 +165,9 @@ class AdminController extends Controller
             $aplazamiento->partido->update(['estado' => 'aplazado']);
         }
 
+        // Enviar notificación al capitán que lo solicitó
+        $aplazamiento->solicitante->notify(new \App\Notifications\AplazamientoResueltoNotification($aplazamiento));
+
         return back()->with('success', 'Solicitud de aplazamiento procesada: ' . ucfirst($request->accion));
     }
 }

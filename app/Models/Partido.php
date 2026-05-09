@@ -79,14 +79,9 @@ class Partido extends Model
         return $query->where('estado', 'jugado');
     }
 
-    public function scopeProgramados($query)
+    public function scopePendientes($query)
     {
-        return $query->where('estado', 'programado');
-    }
-
-    public function scopeEnCurso($query)
-    {
-        return $query->where('estado', 'en_curso');
+        return $query->where('estado', 'pendiente');
     }
 
     public function scopeEnCurso($query)

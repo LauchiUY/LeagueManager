@@ -5,6 +5,7 @@ use App\Http\Controllers\EquipoController;
 use App\Http\Controllers\ClasificacionController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\PartidoController;
+use App\Http\Controllers\CapitanController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -28,6 +29,17 @@ Route::middleware(['auth', 'role:arbitro,admin'])->group(function () {
     Route::post('/partidos/{id}/evento', [PartidoController::class, 'registrarEvento'])->name('partidos.evento.store');
     Route::post('/partidos/{id}/validar', [PartidoController::class, 'validarActa'])->name('partidos.validar');
     Route::post('/partidos/{id}/acta', [PartidoController::class, 'subirFotoActa'])->name('partidos.acta.upload');
+});
+
+// Rutas del Capitán (Panel de Equipo y Convocatorias)
+Route::middleware(['auth', 'role:capitan,admin'])->prefix('capitan')->name('capitan.')->group(function () {
+    Route::get('/mi-equipo', [CapitanController::class, 'miEquipo'])->name('equipo');
+    Route::post('/jugador/add', [CapitanController::class, 'addJugador'])->name('jugador.add');
+    Route::delete('/jugador/{id}/remove', [CapitanController::class, 'removeJugador'])->name('jugador.remove');
+    
+    Route::get('/partido/{id}/convocatoria', [CapitanController::class, 'convocatoria'])->name('convocatoria');
+    Route::post('/partido/{id}/convocatoria', [CapitanController::class, 'guardarConvocatoria'])->name('convocatoria.guardar');
+    Route::post('/partido/{id}/aplazar', [CapitanController::class, 'solicitarAplazamiento'])->name('aplazar');
 });
 
 // Ruta para el algoritmo del Calendario (Modificada temporalmente a GET sin middleware para que la pruebes fácilmente)

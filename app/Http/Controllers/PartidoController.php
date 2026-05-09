@@ -77,8 +77,8 @@ class PartidoController extends Controller
             return back()->with('error', 'No se pueden añadir eventos a un partido que ya está jugado.');
         }
         
-        // Si estaba programado, al añadir el primer evento pasa a "en_curso"
-        if ($partido->estado === 'programado') {
+        // Si estaba pendiente, al añadir el primer evento pasa a "en_curso"
+        if ($partido->estado === 'pendiente') {
             $partido->update(['estado' => 'en_curso']);
         }
 

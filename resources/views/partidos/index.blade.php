@@ -50,8 +50,8 @@
                                 </td>
                                 <td>{{ $partido->campo_pista }}</td>
                                 <td>
-                                    @if($partido->estado === 'programado')
-                                        <span class="badge bg-secondary">Programado</span>
+                                    @if($partido->estado === 'pendiente')
+                                        <span class="badge bg-secondary">Pendiente</span>
                                     @elseif($partido->estado === 'en_curso')
                                         <span class="badge bg-primary">En Curso</span>
                                     @elseif($partido->estado === 'jugado')

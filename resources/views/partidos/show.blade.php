@@ -12,8 +12,8 @@
             <p class="text-secondary">{{ $partido->competicion->nombre }} | {{ $partido->fecha_hora->format('d/m/Y H:i') }} | {{ $partido->campo_pista }}</p>
         </div>
         <div>
-            @if($partido->estado === 'programado')
-                <span class="badge bg-secondary fs-6 px-3 py-2">Programado</span>
+            @if($partido->estado === 'pendiente')
+                <span class="badge bg-secondary fs-6 px-3 py-2">Pendiente</span>
             @elseif($partido->estado === 'en_curso')
                 <span class="badge bg-primary fs-6 px-3 py-2">En Curso</span>
             @elseif($partido->estado === 'jugado')

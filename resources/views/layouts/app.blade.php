@@ -51,6 +51,11 @@
                         </li>
                     @else
                         <li class="nav-item">
+                            <a class="nav-link" href="{{ route('perfil.index') }}">
+                                <i class="bi bi-person-circle me-1"></i>Mi Perfil
+                            </a>
+                        </li>
+                        <li class="nav-item">
                             <a class="nav-link" href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
                                 <i class="bi bi-box-arrow-right me-1"></i>Salir ({{ Auth::user()->nombre }})
                             </a>

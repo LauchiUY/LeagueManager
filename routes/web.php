@@ -71,6 +71,11 @@ Route::get('/admin/test-sanciones', function () {
     ]);
 });
 
+// Perfil de usuario
+Route::middleware(['auth'])->group(function () {
+    Route::get('/perfil', [App\Http\Controllers\PerfilController::class, 'index'])->name('perfil.index');
+});
+
 // Rutas de Autenticación
 Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login')->middleware('guest');
 Route::post('/login', [AuthController::class, 'login'])->middleware('guest');

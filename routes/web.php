@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\EquipoController;
 use App\Http\Controllers\ClasificacionController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\PartidoController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -118,3 +119,6 @@ Route::get('/ver-resultados', function () {
     
     return response($html);
 });
+
+// Ruta para que el árbitro valide el acta (y salte la sanción si procede)
+Route::post('/partidos/{partido}/validar', [PartidoController::class, 'validarActa'])->middleware('auth')->name('partidos.validar');

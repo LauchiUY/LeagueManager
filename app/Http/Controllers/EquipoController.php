@@ -34,4 +34,11 @@ class EquipoController extends Controller
 
         return redirect()->route('equipos.index');
     }
+
+    public function show(Equipo $equipo)
+    {
+        // Cargamos la relación de la plantilla (y los datos del usuario asociado)
+        $equipo->load('plantilla.usuario');
+        return view('equipos.show', compact('equipo'));
+    }
 }

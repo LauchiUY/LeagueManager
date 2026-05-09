@@ -46,8 +46,21 @@ class AuthController extends Controller
 
         if (Auth::attempt($credentials, $request->boolean('remember'))) {
             $request->session()->regenerate();
+            
+            $user = Auth::user();
+            $redirectPath = '/';
+            
+            if ($user->rol === 'admin') {
+                $redirectPath = '/admin';
+            } elseif ($user->rol === 'arbitro') {
+                $redirectPath = '/arbitro/partidos';
+            } elseif ($user->rol === 'capitan') {
+                $redirectPath = '/mi-equipo';
+            } elseif ($user->rol === 'jugador') {
+                $redirectPath = '/perfil';
+            }
 
-            return redirect()->intended('/')->with('success', '¡Bienvenido de nuevo!');
+            return redirect()->intended($redirectPath)->with('success', '¡Bienvenido de nuevo, ' . $user->nombre . '!');
         }
 
         return back()->withErrors([

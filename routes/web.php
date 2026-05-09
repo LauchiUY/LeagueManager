@@ -4,6 +4,9 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\EquipoController;
 use App\Http\Controllers\ClasificacionController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\CapitanController;
+use App\Http\Controllers\ArbitroController;
+use App\Http\Controllers\AdminController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -71,9 +74,29 @@ Route::get('/admin/test-sanciones', function () {
     ]);
 });
 
-// Perfil de usuario
+// Perfil de usuario general
 Route::middleware(['auth'])->group(function () {
     Route::get('/perfil', [App\Http\Controllers\PerfilController::class, 'index'])->name('perfil.index');
+});
+
+// Panel de Capitán (Mi Equipo)
+Route::middleware(['auth', 'role:capitan'])->prefix('mi-equipo')->name('capitan.')->group(function () {
+    Route::get('/', [CapitanController::class, 'index'])->name('index');
+    Route::post('/fichar', [CapitanController::class, 'ficharJugador'])->name('fichar');
+    Route::delete('/expulsar/{id}', [CapitanController::class, 'expulsarJugador'])->name('expulsar');
+});
+
+// Panel de Árbitro (Acta Digital)
+Route::middleware(['auth', 'role:arbitro'])->prefix('arbitro')->name('arbitro.')->group(function () {
+    Route::get('/partidos', [ArbitroController::class, 'index'])->name('partidos');
+    Route::get('/acta/{partido}', [ArbitroController::class, 'acta'])->name('acta');
+    Route::post('/acta/{partido}/evento', [ArbitroController::class, 'registrarEvento'])->name('registrar_evento');
+    Route::post('/acta/{partido}/finalizar', [ArbitroController::class, 'finalizarPartido'])->name('finalizar_partido');
+});
+
+// Panel de Administración General
+Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/', [AdminController::class, 'index'])->name('index');
 });
 
 // Rutas de Autenticación

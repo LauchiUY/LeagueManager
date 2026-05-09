@@ -13,7 +13,12 @@
             --lm-dark: #1a1a2e;
             --lm-accent: #e94560;
         }
-        body { background-color: #f0f2f5; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { 
+            background-color: var(--lm-dark); 
+            color: #fff;
+            font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            min-height: 100vh;
+        }
         .navbar { background: linear-gradient(135deg, var(--lm-dark) 0%, #16213e 100%) !important; box-shadow: 0 2px 10px rgba(0,0,0,0.3); }
         .navbar-brand { font-weight: 800; font-size: 1.4rem; color: var(--lm-primary) !important; letter-spacing: 1px; }
         .navbar-brand i { margin-right: 6px; }
@@ -41,9 +46,24 @@
                         <li class="nav-item">
                             <a class="nav-link" href="{{ route('clasificacion.competiciones') }}"><i class="bi bi-bar-chart-fill me-1"></i>Clasificación</a>
                         </li>
+                        @if(Auth::user()->rol === 'admin')
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ route('admin.index') }}"><i class="bi bi-shield-lock-fill me-1"></i>Panel Admin</a>
+                            </li>
+                        @endif
+                        @if(Auth::user()->rol === 'arbitro')
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ route('arbitro.partidos') }}"><i class="bi bi-stopwatch-fill me-1"></i>Mis Partidos</a>
+                            </li>
+                        @endif
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ route('equipos.index') }}"><i class="bi bi-people-fill me-1"></i>Equipos</a>
+                            <a class="nav-link" href="{{ route('equipos.index') }}"><i class="bi bi-shield-fill me-1"></i>Equipos</a>
                         </li>
+                        @if(Auth::user()->rol === 'capitan')
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ route('capitan.index') }}"><i class="bi bi-people-fill me-1"></i>Gestionar Mi Equipo</a>
+                            </li>
+                        @endif
                     @endauth
                     @guest
                         <li class="nav-item">

@@ -39,6 +39,60 @@ class AdminController extends Controller
     }
 
     /**
+     * Crea una nueva competición
+     */
+    public function crearCompeticion(Request $request)
+    {
+        $request->validate([
+            'nombre' => 'required|string|max:255',
+            'deporte' => 'required|string|max:100',
+            'puntos_victoria' => 'required|integer|min:0',
+            'puntos_empate' => 'required|integer|min:0',
+        ]);
+
+        Competicion::create([
+            'nombre' => $request->nombre,
+            'deporte' => $request->deporte,
+            'estado' => 'en_curso',
+            'puntos_victoria' => $request->puntos_victoria,
+            'puntos_empate' => $request->puntos_empate,
+        ]);
+
+        return back()->with('success', 'Competición creada correctamente.');
+    }
+
+    /**
+     * Actualiza una competición existente
+     */
+    public function actualizarCompeticion(Request $request, $id)
+    {
+        $competicion = Competicion::findOrFail($id);
+        $request->validate([
+            'nombre' => 'required|string|max:255',
+            'deporte' => 'required|string|max:100',
+            'estado' => 'required|in:en_curso,finalizada,suspendida',
+            'puntos_victoria' => 'required|integer|min:0',
+            'puntos_empate' => 'required|integer|min:0',
+        ]);
+
+        $competicion->update($request->only(['nombre', 'deporte', 'estado', 'puntos_victoria', 'puntos_empate']));
+        return back()->with('success', 'Competición actualizada correctamente.');
+    }
+
+    /**
+     * Elimina una competición y todos sus partidos
+     */
+    public function eliminarCompeticion($id)
+    {
+        $competicion = Competicion::findOrFail($id);
+        // Borrar partidos asociados primero
+        $competicion->partidos()->delete();
+        $competicion->equipos()->detach();
+        $competicion->delete();
+        return back()->with('success', 'Competición eliminada del sistema.');
+    }
+
+    /**
      * Asigna los equipos que participarán en una competición
      */
     public function asignarEquipos(Request $request, $id)

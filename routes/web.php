@@ -57,6 +57,9 @@ Route::middleware(['auth', 'role:capitan,admin'])->prefix('capitan')->name('capi
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/', [AdminController::class, 'dashboard'])->name('dashboard');
     Route::get('/competiciones', [AdminController::class, 'competiciones'])->name('competiciones');
+    Route::post('/competiciones/crear', [AdminController::class, 'crearCompeticion'])->name('competiciones.crear');
+    Route::put('/competiciones/{id}', [AdminController::class, 'actualizarCompeticion'])->name('competiciones.actualizar');
+    Route::delete('/competiciones/{id}', [AdminController::class, 'eliminarCompeticion'])->name('competiciones.eliminar');
     Route::post('/competiciones/{id}/equipos', [AdminController::class, 'asignarEquipos'])->name('competiciones.equipos');
     Route::post('/competiciones/{id}/calendario', [AdminController::class, 'generarCalendario'])->name('competiciones.calendario');
     

@@ -14,7 +14,17 @@ Route::get('/', function () {
 
 Route::middleware(['auth'])->group(function () {
     // Equipos
-    Route::resource('equipos', EquipoController::class);
+    Route::get('/equipos', [EquipoController::class, 'index'])->name('equipos.index');
+    
+    Route::middleware(['role:admin'])->group(function () {
+        Route::get('/equipos/create', [EquipoController::class, 'create'])->name('equipos.create');
+        Route::post('/equipos', [EquipoController::class, 'store'])->name('equipos.store');
+        Route::get('/equipos/{id}/edit', [EquipoController::class, 'edit'])->name('equipos.edit');
+        Route::put('/equipos/{id}', [EquipoController::class, 'update'])->name('equipos.update');
+        Route::delete('/equipos/{id}', [EquipoController::class, 'destroy'])->name('equipos.destroy');
+    });
+
+    Route::get('/equipos/{id}', [EquipoController::class, 'show'])->name('equipos.show');
 
     // Clasificación y estadísticas
     Route::get('/clasificacion', [ClasificacionController::class, 'competiciones'])->name('clasificacion.competiciones');

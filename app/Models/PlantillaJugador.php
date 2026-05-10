@@ -11,7 +11,7 @@ class PlantillaJugador extends Model
 
     protected $table = 'plantilla_jugadores';
 
-    protected $fillable = ['id_equipo', 'id_usuario', 'dorsal', 'estado'];
+    protected $fillable = ['id_equipo', 'id_usuario', 'dorsal', 'estado', 'es_capitan'];
 
     public function equipo()
     {

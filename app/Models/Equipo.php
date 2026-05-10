@@ -9,12 +9,9 @@ class Equipo extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['nombre', 'logo_url', 'id_capitan', 'puntos_sancion'];
+    protected $fillable = ['nombre', 'logo_url', 'puntos_sancion'];
 
-    public function capitan()
-    {
-        return $this->belongsTo(Usuario::class, 'id_capitan');
-    }
+
 
     public function partidosLocal()
     {

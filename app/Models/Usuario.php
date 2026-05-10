@@ -22,10 +22,6 @@ class Usuario extends Authenticatable
         return UsuarioFactory::new();
     }
 
-    public function equipoCapitan() {
-        return $this->hasOne(Equipo::class, 'id_capitan');
-    }
-
     public function plantillas() {
         return $this->hasMany(PlantillaJugador::class, 'id_usuario');
     }

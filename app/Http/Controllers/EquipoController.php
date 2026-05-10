@@ -9,7 +9,7 @@ class EquipoController extends Controller
 {
     public function index()
     {
-        $equipos = Equipo::all();
+        $equipos = Equipo::with('plantilla.usuario')->get();
         return view('equipos.index', compact('equipos'));
     }
 
@@ -25,12 +25,20 @@ class EquipoController extends Controller
             'id_capitan' => 'required|integer', // Obligamos a que manden un ID de capitán
         ]);
 
-        Equipo::create([
+        $equipo = Equipo::create([
             'nombre' => $request->nombre,
             'logo_url' => 'default.png',
-            'id_capitan' => $request->id_capitan,
             'puntos_sancion' => 0
         ]);
+
+        if ($request->filled('id_capitan')) {
+            \App\Models\PlantillaJugador::create([
+                'id_equipo' => $equipo->id,
+                'id_usuario' => $request->id_capitan,
+                'estado' => 'activo',
+                'es_capitan' => true
+            ]);
+        }
 
         return redirect()->route('equipos.index');
     }

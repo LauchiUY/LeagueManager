@@ -17,6 +17,7 @@ return new class extends Migration
         $table->foreignId('id_usuario')->constrained('usuarios')->onDelete('cascade');
         $table->integer('dorsal')->nullable();
         $table->string('estado')->default('activo');
+        $table->boolean('es_capitan')->default(false);
         $table->timestamps();
     });
 }

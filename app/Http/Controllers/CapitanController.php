@@ -18,7 +18,9 @@ class CapitanController extends Controller
         $user = Auth::user();
         
         // El equipo del que este usuario es capitán
-        $equipo = $user->equipoCapitan;
+        $equipo = Equipo::whereHas('plantilla', function($q) use ($user) {
+            $q->where('id_usuario', $user->id)->where('es_capitan', true);
+        })->first();
         
         if (!$equipo) {
             return redirect()->route('perfil.index')->with('error', 'No tienes ningún equipo asignado como capitán.');
@@ -40,7 +42,9 @@ class CapitanController extends Controller
         ]);
 
         $user = Auth::user();
-        $equipo = $user->equipoCapitan;
+        $equipo = Equipo::whereHas('plantilla', function($q) use ($user) {
+            $q->where('id_usuario', $user->id)->where('es_capitan', true);
+        })->first();
 
         if (!$equipo) {
             return redirect()->back()->with('error', 'No tienes permiso.');
@@ -89,7 +93,9 @@ class CapitanController extends Controller
     public function expulsarJugador($id)
     {
         $user = Auth::user();
-        $equipo = $user->equipoCapitan;
+        $equipo = Equipo::whereHas('plantilla', function($q) use ($user) {
+            $q->where('id_usuario', $user->id)->where('es_capitan', true);
+        })->first();
 
         if (!$equipo) {
             return redirect()->back()->with('error', 'No tienes permiso.');

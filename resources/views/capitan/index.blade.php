@@ -159,14 +159,14 @@
                                                 <span class="text-white fw-bold">#{{ $plantilla->dorsal ?? '?' }}</span>
                                             </td>
                                             <td>
-                                                @if($equipo->id_capitan == ($plantilla->usuario->id ?? -1))
+                                                @if($plantilla->es_capitan)
                                                     <span class="badge rounded-pill bg-warning text-dark"><i class="bi bi-star-fill me-1"></i> Capitán</span>
                                                 @else
                                                     <span class="badge rounded-pill" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);">Jugador</span>
                                                 @endif
                                             </td>
                                             <td class="text-end pe-3">
-                                                @if($equipo->id_capitan != ($plantilla->usuario->id ?? -1))
+                                                @if(!$plantilla->es_capitan)
                                                     <form action="{{ route('capitan.expulsar', $plantilla->id) }}" method="POST" class="d-inline" onsubmit="return confirm('¿Estás seguro de que quieres expulsar a este jugador?');">
                                                         @csrf
                                                         @method('DELETE')

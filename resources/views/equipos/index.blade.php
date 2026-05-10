@@ -60,7 +60,7 @@
                     </div>
                     
                     <h4 class="text-white fw-bold mb-1 title-font">{{ $equipo->nombre }}</h4>
-                    <p class="text-muted-custom small mb-3">ID Capitán: #{{ $equipo->id_capitan }}</p>
+                    <p class="text-muted-custom small mb-3">Capitán: {{ $equipo->plantilla->firstWhere('es_capitan', true)?->usuario?->nombre ?? 'Sin asignar' }}</p>
                     
                     <div class="d-flex justify-content-center gap-4 text-muted-custom mb-4 mt-2">
                         <div>

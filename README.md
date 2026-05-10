@@ -1,59 +1,93 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# 🏆 League Manager
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+League Manager es una plataforma web profesional para la gestión integral de ligas y competiciones deportivas. Desarrollada con **Laravel**, la aplicación automatiza la creación de torneos, la gestión de equipos, las actas arbitrales digitales y el control disciplinario mediante un robusto sistema de roles y permisos.
 
-## About Laravel
+## ✨ Características Principales
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+*   **Autenticación y Roles:** Sistema seguro de acceso para Administradores, Árbitros, Capitanes y Jugadores, con paneles de control (dashboards) personalizados y protección de rutas.
+*   **Gestión de Torneos (Round-Robin):** Algoritmo automatizado para la generación de calendarios y jornadas (todos contra todos) con asignación de pistas y árbitros.
+*   **Acta Digital en Tiempo Real:** Panel interactivo para que los árbitros registren eventos (goles, tarjetas amarillas/rojas, observaciones) minuto a minuto durante los partidos.
+*   **Gestión de Equipos:** Los capitanes pueden administrar sus plantillas, fichar a nuevos jugadores mediante correo electrónico y expulsar miembros.
+*   **Sistema Disciplinario Automatizado (`SancionesService`):** Detección y aplicación automática de sanciones (ej. partidos de suspensión por tarjetas rojas) y auditoría de alineaciones indebidas.
+*   **Interfaz Moderna (Glassmorphism):** Diseño premium, dinámico y responsivo, con efectos translúcidos, animaciones suaves y una paleta de colores vibrante para una experiencia de usuario de primer nivel.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## 👥 Sistema de Roles
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+La aplicación divide sus funcionalidades dependiendo del tipo de usuario:
 
-## Learning Laravel
+1.  **👑 Administrador:** Control total. Crea competiciones, equipos, aprueba usuarios y supervisa el funcionamiento general de todas las ligas.
+2.  **⚖️ Árbitro:** Accede a las Actas Digitales de los partidos que tiene asignados. Registra los eventos del encuentro y cambia el estado del partido a "finalizado".
+3.  **🛡️ Capitán:** Gestiona la plantilla de su equipo (ficha/expulsa), consulta las clasificaciones y calendarios.
+4.  **🏃 Jugador:** Visualiza su perfil, sus estadísticas personales, el calendario de su equipo y las clasificaciones públicas.
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+## 🛠️ Tecnologías Utilizadas
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+*   **Backend:** [Laravel 11](https://laravel.com/) (PHP 8.2+)
+*   **Base de Datos:** MySQL / Eloquent ORM
+*   **Frontend:** Blade Templates, HTML5, Vanilla CSS (Diseño UI/UX Custom), Bootstrap (Layout y Grid)
+*   **Arquitectura:** Patrón MVC (Model-View-Controller) apoyado por Service Pattern para la lógica de negocio compleja (ej. generación de torneos y auditorías).
 
-## Laravel Sponsors
+## 🚀 Instalación y Configuración Local
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+Sigue estos pasos para desplegar el proyecto en tu entorno local:
 
-### Premium Partners
+### 1. Clonar el repositorio
+```bash
+git clone <url-del-repositorio>
+cd LeagueManager
+```
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+### 2. Instalar dependencias
+```bash
+composer install
+npm install
+npm run build
+```
 
-## Contributing
+### 3. Configurar variables de entorno
+Copia el archivo de ejemplo y configura tu base de datos:
+```bash
+cp .env.example .env
+```
+*(Asegúrate de editar el archivo `.env` con las credenciales correctas de tu base de datos MySQL local).*
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+### 4. Generar clave de aplicación
+```bash
+php artisan key:generate
+```
 
-## Code of Conduct
+### 5. Migraciones y Seeders (Poblar Base de Datos)
+Para crear las tablas y rellenarlas con datos de prueba (usuarios, equipos, partidos pre-jugados, eventos y sanciones):
+```bash
+php artisan migrate:fresh --seed
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+### 6. Iniciar el servidor local
+```bash
+php artisan serve
+```
+La aplicación estará disponible en `http://localhost:8000`.
 
-## Security Vulnerabilities
+## 🧪 Usuarios de Prueba (Seeders)
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+Si has ejecutado el comando `--seed`, puedes probar la aplicación con las siguientes cuentas preconfiguradas (la contraseña para todos es `1234` salvo indicación contraria):
 
-## License
+*   **Administrador:** `admin@admin.com` (contraseña: `admin123`)
+*   **Árbitro:** `sergio@leaguemanager.com`
+*   **Capitán:** `carlos@leaguemanager.com` (Capitán de Tigres FC)
+*   **Jugador:** `user@user.com` (contraseña: `user123`)
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+## 📊 Arquitectura de Base de Datos (E-R)
+
+La base de datos está diseñada de forma relacional asegurando la máxima integridad referencial:
+
+- **Usuarios** (Tabla principal de autenticación y roles)
+- **Equipos** (Entidad deportiva principal)
+- **Competiciones** (Ligas o Torneos en curso/finalizados)
+- **Partidos** (Encuentros entre un equipo local y visitante con un árbitro asignado)
+- **Plantilla Jugadores** (Tabla pivote fundamental que une `usuarios` con `equipos` y define quién `es_capitan`)
+- **Eventos Partido** (Historial cronológico de lo ocurrido en el campo)
+- **Sanciones** (Registro disciplinario con partidos de suspensión vinculados a eventos y usuarios)
+
+---
+*Desarrollado como proyecto académico / profesional de gestión deportiva.*

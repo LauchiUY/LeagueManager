@@ -108,7 +108,7 @@
                                         </div>
                                     </td>
                                     <td>
-                                        @if($equipo->id_capitan == ($jugador->usuario->id ?? -1))
+                                        @if($jugador->es_capitan)
                                             <span class="badge rounded-pill bg-warning text-dark"><i class="bi bi-star-fill me-1"></i> Capitán</span>
                                         @else
                                             <span class="badge rounded-pill" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);">Jugador</span>

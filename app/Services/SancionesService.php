@@ -21,8 +21,8 @@ class SancionesService
     {
         $partido = Partido::with(['eventoPartido', 'equipoLocal', 'equipoVisitante'])->findOrFail($partidoId);
 
-        if ($partido->estado !== 'finalizado') {
-            throw new Exception("El partido debe estar finalizado para evaluar sanciones.");
+        if ($partido->estado !== 'jugado' && $partido->estado !== 'finalizado') {
+            throw new Exception("El partido debe estar jugado para evaluar sanciones.");
         }
 
         // Obtener IDs de jugadores únicos que participaron en el partido

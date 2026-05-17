@@ -76,12 +76,17 @@ class Partido extends Model
 
     public function scopeFinalizados($query)
     {
-        return $query->where('estado', 'finalizado');
+        return $query->where('estado', 'jugado');
     }
 
-    public function scopeProgramados($query)
+    public function scopePendientes($query)
     {
-        return $query->where('estado', 'programado');
+        return $query->where('estado', 'pendiente');
+    }
+
+    public function scopeEnCurso($query)
+    {
+        return $query->where('estado', 'en_curso');
     }
 
     public function esLocal(int $idEquipo): bool
@@ -91,7 +96,7 @@ class Partido extends Model
 
     public function ganador(): ?Equipo
     {
-        if ($this->estado !== 'finalizado') {
+        if ($this->estado !== 'jugado') {
             return null;
         }
 

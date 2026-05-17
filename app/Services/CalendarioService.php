@@ -59,7 +59,7 @@ class CalendarioService
                         'jornada'        => $jornadaGlobal,
                         'fecha_hora'     => $fechaActual->copy(),
                         'campo_pista'    => $campo,
-                        'estado'         => 'programado',
+                        'estado'         => 'pendiente',
                         'created_at'     => now(),
                         'updated_at'     => now(),
                     ];
@@ -92,7 +92,7 @@ class CalendarioService
                         'jornada'        => $jornadaGlobal,
                         'fecha_hora'     => $fechaActual->copy(),
                         'campo_pista'    => $campo,
-                        'estado'         => 'programado',
+                        'estado'         => 'pendiente',
                         'created_at'     => now(),
                         'updated_at'     => now(),
                     ];
@@ -132,7 +132,7 @@ class CalendarioService
     public function eliminarCalendario(int $competicionId): int
     {
         return Partido::where('id_competicion', $competicionId)
-            ->where('estado', 'programado')
+            ->where('estado', 'pendiente')
             ->delete();
     }
 }

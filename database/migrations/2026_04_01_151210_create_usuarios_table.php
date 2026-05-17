@@ -18,6 +18,7 @@ return new class extends Migration
         $table->string('password');
         $table->string('telefono')->nullable();
         $table->enum('rol', ['admin', 'arbitro', 'capitan', 'jugador']);
+        $table->rememberToken();
         $table->timestamps(); 
     });
 }

@@ -15,7 +15,7 @@ return new class extends Migration
         $table->id();
         $table->string('nombre');
         $table->string('logo_url')->nullable();
-        $table->foreignId('id_capitan')->constrained('usuarios'); // FK
+
         $table->integer('puntos_sancion')->default(0);
         $table->timestamps();
     });

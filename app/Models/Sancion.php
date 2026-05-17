@@ -11,7 +11,7 @@ class Sancion extends Model
 
     protected $table = 'sanciones';
 
-    protected $fillable = ['id_usuario', 'id_partido_origen', 'partidos_suspension', 'motivo', 'estado'];
+    protected $fillable = ['id_usuario', 'id_partido_origen', 'partidos_suspension', 'partidos_cumplidos', 'motivo', 'estado'];
 
     public function usuario()
     {

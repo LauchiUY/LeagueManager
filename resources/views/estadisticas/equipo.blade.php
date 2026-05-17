@@ -24,7 +24,7 @@
     </div>
     <div>
         <h1 class="fw-bold mb-0">{{ $equipo->nombre }}</h1>
-        <span class="text-muted">Capitán: {{ $equipo->capitan->nombre ?? 'Sin asignar' }}</span>
+        <span class="text-muted">Capitán: {{ $equipo->plantilla->firstWhere('es_capitan', true)?->usuario?->nombre ?? 'Sin asignar' }}</span>
     </div>
 </div>
 

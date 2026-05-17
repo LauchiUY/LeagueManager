@@ -9,12 +9,9 @@ class Equipo extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['nombre', 'logo_url', 'id_capitan', 'puntos_sancion'];
+    protected $fillable = ['nombre', 'logo_url', 'puntos_sancion'];
 
-    public function capitan()
-    {
-        return $this->belongsTo(Usuario::class, 'id_capitan');
-    }
+
 
     public function partidosLocal()
     {
@@ -29,5 +26,19 @@ class Equipo extends Model
     public function plantilla()
     {
         return $this->hasMany(PlantillaJugador::class, 'id_equipo');
+    }
+
+    public function competiciones()
+    {
+        return $this->belongsToMany(Competicion::class, 'competicion_equipo', 'id_equipo', 'id_competicion')->withTimestamps();
+    }
+
+    /**
+     * Obtiene el capitán del equipo a través de la plantilla.
+     */
+    public function getCapitanAttribute()
+    {
+        $registro = $this->plantilla->firstWhere('es_capitan', true);
+        return $registro ? $registro->usuario : null;
     }
 }

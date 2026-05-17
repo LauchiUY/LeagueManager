@@ -22,7 +22,9 @@ class CapitanController extends Controller
         
         $equipo = Equipo::with(['plantilla.usuario.sanciones' => function($q) {
             $q->where('estado', 'activa');
-        }])->where('id_capitan', $user->id)->first();
+        }])->whereHas('plantilla', function($q) use ($user) {
+            $q->where('id_usuario', $user->id)->where('es_capitan', true);
+        })->first();
 
         if (!$equipo) {
             return redirect('/')->with('error', 'No eres capitán de ningún equipo.');
@@ -50,7 +52,7 @@ class CapitanController extends Controller
             'dorsal' => 'required|integer|min:1|max:99'
         ]);
 
-        $equipo = Equipo::where('id_capitan', Auth::id())->firstOrFail();
+        $equipo = Equipo::whereHas('plantilla', fn($q) => $q->where('id_usuario', Auth::id())->where('es_capitan', true))->firstOrFail();
         $jugador = Usuario::where('email', $request->email)->first();
 
         if ($jugador->rol !== 'jugador') {
@@ -80,7 +82,7 @@ class CapitanController extends Controller
      */
     public function removeJugador($idJugador)
     {
-        $equipo = Equipo::where('id_capitan', Auth::id())->firstOrFail();
+        $equipo = Equipo::whereHas('plantilla', fn($q) => $q->where('id_usuario', Auth::id())->where('es_capitan', true))->firstOrFail();
         
         PlantillaJugador::where('id_equipo', $equipo->id)
             ->where('id_usuario', $idJugador)
@@ -94,7 +96,7 @@ class CapitanController extends Controller
      */
     public function convocatoria($partidoId)
     {
-        $equipo = Equipo::where('id_capitan', Auth::id())->firstOrFail();
+        $equipo = Equipo::whereHas('plantilla', fn($q) => $q->where('id_usuario', Auth::id())->where('es_capitan', true))->firstOrFail();
         $partido = Partido::findOrFail($partidoId);
 
         if ($partido->id_local !== $equipo->id && $partido->id_visitante !== $equipo->id) {
@@ -120,7 +122,7 @@ class CapitanController extends Controller
      */
     public function guardarConvocatoria(Request $request, $partidoId)
     {
-        $equipo = Equipo::where('id_capitan', Auth::id())->firstOrFail();
+        $equipo = Equipo::whereHas('plantilla', fn($q) => $q->where('id_usuario', Auth::id())->where('es_capitan', true))->firstOrFail();
         $partido = Partido::findOrFail($partidoId);
 
         // Limpiar convocatorias anteriores para este partido/equipo
@@ -151,7 +153,7 @@ class CapitanController extends Controller
     public function solicitarAplazamiento(Request $request, $partidoId)
     {
         $request->validate(['motivo' => 'required|string|min:10|max:500']);
-        $equipo = Equipo::where('id_capitan', Auth::id())->firstOrFail();
+        $equipo = Equipo::whereHas('plantilla', fn($q) => $q->where('id_usuario', Auth::id())->where('es_capitan', true))->firstOrFail();
         $partido = Partido::findOrFail($partidoId);
 
         if ($partido->estado !== 'pendiente') {

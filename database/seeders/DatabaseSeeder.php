@@ -40,35 +40,35 @@ class DatabaseSeeder extends Seeder
 
         // ── Equipos ───────────────────────────────────────────────
         $equipos = [
-            ['id' => 1, 'nombre' => 'Tigres FC',        'logo_url' => 'default.png', 'id_capitan' => 2, 'puntos_sancion' => 0, 'created_at' => now(), 'updated_at' => now()],
-            ['id' => 2, 'nombre' => 'Halcones United',  'logo_url' => 'default.png', 'id_capitan' => 3, 'puntos_sancion' => 0, 'created_at' => now(), 'updated_at' => now()],
-            ['id' => 3, 'nombre' => 'Lobos Azules',     'logo_url' => 'default.png', 'id_capitan' => 4, 'puntos_sancion' => 0, 'created_at' => now(), 'updated_at' => now()],
-            ['id' => 4, 'nombre' => 'Dragones Rojos',   'logo_url' => 'default.png', 'id_capitan' => 5, 'puntos_sancion' => 0, 'created_at' => now(), 'updated_at' => now()],
-            ['id' => 5, 'nombre' => 'Águilas Doradas',  'logo_url' => 'default.png', 'id_capitan' => 6, 'puntos_sancion' => 3, 'created_at' => now(), 'updated_at' => now()],
-            ['id' => 6, 'nombre' => 'Panteras Negras',  'logo_url' => 'default.png', 'id_capitan' => 7, 'puntos_sancion' => 0, 'created_at' => now(), 'updated_at' => now()],
+            ['id' => 1, 'nombre' => 'Tigres FC',        'logo_url' => 'default.png', 'puntos_sancion' => 0, 'created_at' => now(), 'updated_at' => now()],
+            ['id' => 2, 'nombre' => 'Halcones United',  'logo_url' => 'default.png', 'puntos_sancion' => 0, 'created_at' => now(), 'updated_at' => now()],
+            ['id' => 3, 'nombre' => 'Lobos Azules',     'logo_url' => 'default.png', 'puntos_sancion' => 0, 'created_at' => now(), 'updated_at' => now()],
+            ['id' => 4, 'nombre' => 'Dragones Rojos',   'logo_url' => 'default.png', 'puntos_sancion' => 0, 'created_at' => now(), 'updated_at' => now()],
+            ['id' => 5, 'nombre' => 'Águilas Doradas',  'logo_url' => 'default.png', 'puntos_sancion' => 3, 'created_at' => now(), 'updated_at' => now()],
+            ['id' => 6, 'nombre' => 'Panteras Negras',  'logo_url' => 'default.png', 'puntos_sancion' => 0, 'created_at' => now(), 'updated_at' => now()],
         ];
         DB::table('equipos')->insert($equipos);
 
         // ── Plantilla jugadores ───────────────────────────────────
         $plantilla = [
             // Tigres FC
-            ['id_equipo' => 1, 'id_usuario' => 2,  'dorsal' => 10, 'estado' => 'activo', 'created_at' => now(), 'updated_at' => now()],
-            ['id_equipo' => 1, 'id_usuario' => 10, 'dorsal' => 7,  'estado' => 'activo', 'created_at' => now(), 'updated_at' => now()],
+            ['id_equipo' => 1, 'id_usuario' => 2,  'dorsal' => 10, 'estado' => 'activo', 'es_capitan' => true, 'created_at' => now(), 'updated_at' => now()],
+            ['id_equipo' => 1, 'id_usuario' => 10, 'dorsal' => 7,  'estado' => 'activo', 'es_capitan' => false, 'created_at' => now(), 'updated_at' => now()],
             // Halcones United
-            ['id_equipo' => 2, 'id_usuario' => 3,  'dorsal' => 9,  'estado' => 'activo', 'created_at' => now(), 'updated_at' => now()],
-            ['id_equipo' => 2, 'id_usuario' => 11, 'dorsal' => 5,  'estado' => 'activo', 'created_at' => now(), 'updated_at' => now()],
+            ['id_equipo' => 2, 'id_usuario' => 3,  'dorsal' => 9,  'estado' => 'activo', 'es_capitan' => true, 'created_at' => now(), 'updated_at' => now()],
+            ['id_equipo' => 2, 'id_usuario' => 11, 'dorsal' => 5,  'estado' => 'activo', 'es_capitan' => false, 'created_at' => now(), 'updated_at' => now()],
             // Lobos Azules
-            ['id_equipo' => 3, 'id_usuario' => 4,  'dorsal' => 8,  'estado' => 'activo', 'created_at' => now(), 'updated_at' => now()],
-            ['id_equipo' => 3, 'id_usuario' => 12, 'dorsal' => 3,  'estado' => 'activo', 'created_at' => now(), 'updated_at' => now()],
+            ['id_equipo' => 3, 'id_usuario' => 4,  'dorsal' => 8,  'estado' => 'activo', 'es_capitan' => true, 'created_at' => now(), 'updated_at' => now()],
+            ['id_equipo' => 3, 'id_usuario' => 12, 'dorsal' => 3,  'estado' => 'activo', 'es_capitan' => false, 'created_at' => now(), 'updated_at' => now()],
             // Dragones Rojos
-            ['id_equipo' => 4, 'id_usuario' => 5,  'dorsal' => 11, 'estado' => 'activo', 'created_at' => now(), 'updated_at' => now()],
-            ['id_equipo' => 4, 'id_usuario' => 13, 'dorsal' => 4,  'estado' => 'activo', 'created_at' => now(), 'updated_at' => now()],
+            ['id_equipo' => 4, 'id_usuario' => 5,  'dorsal' => 11, 'estado' => 'activo', 'es_capitan' => true, 'created_at' => now(), 'updated_at' => now()],
+            ['id_equipo' => 4, 'id_usuario' => 13, 'dorsal' => 4,  'estado' => 'activo', 'es_capitan' => false, 'created_at' => now(), 'updated_at' => now()],
             // Águilas Doradas
-            ['id_equipo' => 5, 'id_usuario' => 6,  'dorsal' => 1,  'estado' => 'activo', 'created_at' => now(), 'updated_at' => now()],
-            ['id_equipo' => 5, 'id_usuario' => 14, 'dorsal' => 6,  'estado' => 'activo', 'created_at' => now(), 'updated_at' => now()],
+            ['id_equipo' => 5, 'id_usuario' => 6,  'dorsal' => 1,  'estado' => 'activo', 'es_capitan' => true, 'created_at' => now(), 'updated_at' => now()],
+            ['id_equipo' => 5, 'id_usuario' => 14, 'dorsal' => 6,  'estado' => 'activo', 'es_capitan' => false, 'created_at' => now(), 'updated_at' => now()],
             // Panteras Negras
-            ['id_equipo' => 6, 'id_usuario' => 7,  'dorsal' => 2,  'estado' => 'activo', 'created_at' => now(), 'updated_at' => now()],
-            ['id_equipo' => 6, 'id_usuario' => 15, 'dorsal' => 14, 'estado' => 'activo', 'created_at' => now(), 'updated_at' => now()],
+            ['id_equipo' => 6, 'id_usuario' => 7,  'dorsal' => 2,  'estado' => 'activo', 'es_capitan' => true, 'created_at' => now(), 'updated_at' => now()],
+            ['id_equipo' => 6, 'id_usuario' => 15, 'dorsal' => 14, 'estado' => 'activo', 'es_capitan' => false, 'created_at' => now(), 'updated_at' => now()],
         ];
         DB::table('plantilla_jugadores')->insert($plantilla);
 

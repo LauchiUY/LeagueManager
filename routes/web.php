@@ -6,6 +6,7 @@ use App\Http\Controllers\ClasificacionController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\PartidoController;
 use App\Http\Controllers\CapitanController;
+use App\Http\Controllers\ArbitroController;
 use App\Http\Controllers\AdminController;
 
 Route::get('/', function () {
@@ -15,7 +16,7 @@ Route::get('/', function () {
 Route::middleware(['auth'])->group(function () {
     // Equipos
     Route::get('/equipos', [EquipoController::class, 'index'])->name('equipos.index');
-    
+
     Route::middleware(['role:admin'])->group(function () {
         Route::get('/equipos/create', [EquipoController::class, 'create'])->name('equipos.create');
         Route::post('/equipos', [EquipoController::class, 'store'])->name('equipos.store');
@@ -47,7 +48,7 @@ Route::middleware(['auth', 'role:capitan,admin'])->prefix('capitan')->name('capi
     Route::get('/mi-equipo', [CapitanController::class, 'miEquipo'])->name('equipo');
     Route::post('/jugador/add', [CapitanController::class, 'addJugador'])->name('jugador.add');
     Route::delete('/jugador/{id}/remove', [CapitanController::class, 'removeJugador'])->name('jugador.remove');
-    
+
     Route::get('/partido/{id}/convocatoria', [CapitanController::class, 'convocatoria'])->name('convocatoria');
     Route::post('/partido/{id}/convocatoria', [CapitanController::class, 'guardarConvocatoria'])->name('convocatoria.guardar');
     Route::post('/partido/{id}/aplazar', [CapitanController::class, 'solicitarAplazamiento'])->name('aplazar');
@@ -62,15 +63,28 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::delete('/competiciones/{id}', [AdminController::class, 'eliminarCompeticion'])->name('competiciones.eliminar');
     Route::post('/competiciones/{id}/equipos', [AdminController::class, 'asignarEquipos'])->name('competiciones.equipos');
     Route::post('/competiciones/{id}/calendario', [AdminController::class, 'generarCalendario'])->name('competiciones.calendario');
-    
+
     Route::get('/partidos', [AdminController::class, 'partidos'])->name('partidos');
     Route::post('/partidos/{id}/arbitro', [AdminController::class, 'asignarArbitro'])->name('partidos.arbitro');
-    
+
     Route::get('/sanciones', [AdminController::class, 'sanciones'])->name('sanciones');
     Route::post('/sanciones/crear', [AdminController::class, 'crearSancion'])->name('sanciones.crear');
-    
+
     Route::get('/aplazamientos', [AdminController::class, 'aplazamientos'])->name('aplazamientos');
     Route::post('/aplazamientos/{id}/gestionar', [AdminController::class, 'gestionarAplazamiento'])->name('aplazamientos.gestionar');
+});
+
+// Perfil de usuario general
+Route::middleware(['auth'])->group(function () {
+    Route::get('/perfil', [App\Http\Controllers\PerfilController::class, 'index'])->name('perfil.index');
+});
+
+// Panel de Árbitro (Acta Digital) — rutas de Ayman
+Route::middleware(['auth', 'role:arbitro'])->prefix('arbitro')->name('arbitro.')->group(function () {
+    Route::get('/partidos', [ArbitroController::class, 'index'])->name('partidos');
+    Route::get('/acta/{partido}', [ArbitroController::class, 'acta'])->name('acta');
+    Route::post('/acta/{partido}/evento', [ArbitroController::class, 'registrarEvento'])->name('registrar_evento');
+    Route::post('/acta/{partido}/finalizar', [ArbitroController::class, 'finalizarPartido'])->name('finalizar_partido');
 });
 
 // Rutas de Autenticación
@@ -86,38 +100,38 @@ Route::get('/solo-admins', function () {
 })->middleware(['auth', 'role:admin']);
 
 // Dashboard visual temporal para ver la Base de Datos
-Route::get('/ver-resultados', function () {
+Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
     $partidos = \App\Models\Partido::with(['equipoLocal', 'equipoVisitante'])->orderBy('jornada')->get();
     $sanciones = \App\Models\Sancion::with('usuario')->get();
-    
+
     $html = "<body style='font-family: sans-serif; padding: 20px; background: #f4f4f4;'>";
     $html .= "<div style='background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1);'>";
     $html .= "<h1 style='color: #FF2D20;'>🏆 Panel de Supervisión del Backend</h1>";
-    
+
     $html .= "<h2>📅 Calendario Generado (Prueba de no solapamientos)</h2>";
     $html .= "<table style='width: 100%; border-collapse: collapse;' border='1' cellpadding='8'>";
     $html .= "<tr style='background: #eee;'><th>Jornada</th><th>Local</th><th>Visitante</th><th>Estado</th></tr>";
-    foreach($partidos as $p) {
+    foreach ($partidos as $p) {
         $local = $p->equipoLocal ? $p->equipoLocal->nombre : 'Descansa (Impar)';
         $visit = $p->equipoVisitante ? $p->equipoVisitante->nombre : 'Descansa (Impar)';
         $html .= "<tr><td>Jornada {$p->jornada}</td><td>{$local}</td><td>{$visit}</td><td>{$p->estado}</td></tr>";
     }
     $html .= "</table>";
-    
+
     $html .= "<h2 style='margin-top: 40px; color: red;'>🚨 Sanciones Automáticas</h2>";
     $html .= "<table style='width: 100%; border-collapse: collapse;' border='1' cellpadding='8'>";
     $html .= "<tr style='background: #fee;'><th>Jugador Infractor</th><th>Motivo (Robot Sanciones)</th><th>Castigo</th></tr>";
-    foreach($sanciones as $s) {
+    foreach ($sanciones as $s) {
         $nombre = $s->usuario ? $s->usuario->nombre : 'Desconocido';
         $html .= "<tr><td>{$nombre}</td><td>{$s->motivo}</td><td>{$s->partidos_suspension} Partidos</td></tr>";
     }
-    if($sanciones->isEmpty()) {
+    if ($sanciones->isEmpty()) {
         $html .= "<tr><td colspan='3'>Aún no se han ejecutado sanciones. Ve a /admin/test-sanciones primero.</td></tr>";
     }
     $html .= "</table>";
-    
+
     $html .= "</div></body>";
-    
+
     return response($html);
 });
 

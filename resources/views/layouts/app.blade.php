@@ -6,6 +6,7 @@
     <title>LeagueManager - @yield('title')</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
         :root {
@@ -14,7 +15,12 @@
             --lm-darker: #121225;
             --lm-accent: #e94560;
         }
-        body { background-color: var(--lm-darker); color: #e0e0e0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; min-height: 100vh; }
+        body { 
+            background-color: var(--lm-darker); 
+            color: #e0e0e0;
+            font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            min-height: 100vh;
+        }
         .navbar { background: linear-gradient(135deg, var(--lm-dark) 0%, #16213e 100%) !important; box-shadow: 0 2px 10px rgba(0,0,0,0.3); }
         .navbar-brand { font-weight: 800; font-size: 1.4rem; color: var(--lm-primary) !important; letter-spacing: 1px; }
         .navbar-brand i { margin-right: 6px; }
@@ -44,7 +50,7 @@
                             <a class="nav-link" href="{{ route('clasificacion.competiciones') }}"><i class="bi bi-bar-chart-fill me-1"></i>Clasificación</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ route('equipos.index') }}"><i class="bi bi-people-fill me-1"></i>Equipos</a>
+                            <a class="nav-link" href="{{ route('equipos.index') }}"><i class="bi bi-shield-fill me-1"></i>Equipos</a>
                         </li>
 
                         {{-- Enlaces específicos por rol --}}
@@ -101,7 +107,7 @@
                                                     {{ $notificacion->data['titulo'] ?? 'Aviso' }}
                                                 </strong>
                                                 <small class="text-secondary" style="font-size: 0.8rem;">
-                                                    {{ $notificacion->data['mensaje'] ?? 'Tienes un nuevo aviso en el sistema.' }}
+                                                    {{ $notificacion->data['mensaje'] ?? 'Tienes un nuevo aviso.' }}
                                                 </small>
                                             </div>
                                             @if($notificacion->unread())
@@ -121,6 +127,11 @@
                         </li>
                         
                         <!-- Usuario y Rol -->
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ route('perfil.index') }}">
+                                <i class="bi bi-person-circle me-1"></i>Mi Perfil
+                            </a>
+                        </li>
                         <li class="nav-item">
                             <a class="nav-link" href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
                                 <i class="bi bi-box-arrow-right me-1"></i>{{ Auth::user()->nombre }}

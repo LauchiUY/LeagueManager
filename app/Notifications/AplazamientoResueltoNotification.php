@@ -39,7 +39,7 @@ class AplazamientoResueltoNotification extends Notification
      */
     public function toArray(object $notifiable): array
     {
-        $esLocal = $notifiable->id === $this->partido->equipoLocal->id_capitan;
+        $esLocal = $this->partido->equipoLocal->capitan && $notifiable->id === $this->partido->equipoLocal->capitan->id;
         $rival = $esLocal ? $this->partido->equipoVisitante->nombre : $this->partido->equipoLocal->nombre;
         
         $estadoText = $this->aplazamiento->estado === 'aprobado' ? 'APROBADA' : 'RECHAZADA';

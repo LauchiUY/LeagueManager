@@ -55,7 +55,7 @@ class AuthController extends Controller
                 default   => route('clasificacion.competiciones'),
             };
 
-            return redirect()->intended($ruta)->with('success', '¡Bienvenido de nuevo!');
+            return redirect()->intended($ruta)->with('success', '¡Bienvenido de nuevo, ' . Auth::user()->nombre . '!');
         }
 
         return back()->withErrors([

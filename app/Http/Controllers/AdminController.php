@@ -9,6 +9,7 @@ use App\Models\Sancion;
 use App\Models\Usuario;
 use App\Services\CalendarioService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class AdminController extends Controller
 {
@@ -22,7 +23,8 @@ class AdminController extends Controller
             'partidos_pendientes' => Partido::where('estado', 'pendiente')->count(),
             'partidos_jugados' => Partido::where('estado', 'jugado')->count(),
             'sanciones_activas' => Sancion::where('estado', 'activa')->count(),
-            'usuarios' => Usuario::count()
+            'usuarios' => Usuario::count(),
+            'competiciones' => Competicion::count(),
         ];
 
         return view('admin.dashboard', compact('stats'));

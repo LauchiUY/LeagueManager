@@ -50,7 +50,7 @@ class ClasificacionController extends Controller
      */
     public function estadisticasEquipo($equipoId)
     {
-        $equipo = Equipo::with('capitan')->findOrFail($equipoId);
+        $equipo = Equipo::with('plantilla.usuario')->findOrFail($equipoId);
 
         // Partidos del equipo (local y visitante)
         $partidos = Partido::where(function ($q) use ($equipoId) {

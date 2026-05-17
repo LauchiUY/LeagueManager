@@ -76,10 +76,12 @@
                             <div class="fw-bold fs-4 text-white">{{ $equipo->plantilla_count }}</div>
                             <small style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px;">Jugadores</small>
                         </div>
+                        @if($equipo->puntos_sancion > 0)
                         <div>
-                            <div class="fw-bold fs-4 {{ $equipo->puntos_sancion > 0 ? 'text-danger' : 'text-white' }}">{{ $equipo->puntos_sancion ?? 0 }}</div>
-                            <small style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px;">Sanciones</small>
+                            <div class="fw-bold fs-4 text-danger">-{{ $equipo->puntos_sancion }}</div>
+                            <small style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px;">Pts. Penalización</small>
                         </div>
+                        @endif
                     </div>
 
                     <a href="{{ route('equipos.show', $equipo->id) }}" class="btn btn-outline-light rounded-pill w-100" style="border-color: rgba(255,255,255,0.1); color: #a0a5ba; transition: all 0.3s;">

@@ -34,10 +34,13 @@
                     <p class="text-muted-custom fs-5 mb-0">Capitán: <span class="text-white fw-bold">{{ $equipo->capitan->nombre ?? 'Sin asignar' }}</span></p>
                 </div>
                 <div class="col-md-auto mt-4 mt-md-0 d-flex flex-column gap-2">
-                    <div class="p-3 rounded-4 text-center border" style="background: rgba(0,0,0,0.3); border-color: rgba(255,255,255,0.05) !important;">
-                        <div class="text-muted-custom small text-uppercase mb-1">Sanciones</div>
-                        <div class="display-5 fw-bold {{ $equipo->puntos_sancion > 0 ? 'text-danger' : 'text-success' }}">{{ $equipo->puntos_sancion ?? 0 }}</div>
+                    @if($equipo->puntos_sancion > 0)
+                    <div class="p-3 rounded-4 text-center border" style="background: rgba(0,0,0,0.3); border-color: rgba(220,53,69,0.3) !important;">
+                        <div class="text-muted-custom small text-uppercase mb-1">Pts. Penalización</div>
+                        <div class="display-5 fw-bold text-danger">-{{ $equipo->puntos_sancion }}</div>
+                        <small class="text-muted-custom" style="font-size: 0.7rem;">Se restan de la clasificación</small>
                     </div>
+                    @endif
                     @if(auth()->user()->rol === 'admin')
                         <a href="{{ route('equipos.edit', $equipo->id) }}" class="btn btn-outline-info btn-sm rounded-pill"><i class="bi bi-pencil"></i> Editar</a>
                         <form action="{{ route('equipos.destroy', $equipo->id) }}" method="POST" onsubmit="return confirm('¿Eliminar equipo?');">

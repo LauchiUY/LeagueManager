@@ -45,6 +45,7 @@
                             <th>Motivo</th>
                             <th>Progreso (Partidos)</th>
                             <th>Estado</th>
+                            <th class="text-end">Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -78,10 +79,62 @@
                                         <span class="badge bg-success">Cumplida</span>
                                     @endif
                                 </td>
+                                <td class="text-end">
+                                    <button class="btn btn-sm btn-outline-warning" data-bs-toggle="modal" data-bs-target="#editarSancionModal{{ $sancion->id }}" title="Editar sanción">
+                                        <i class="bi bi-pencil-square"></i>
+                                    </button>
+                                </td>
                             </tr>
+
+                            <!-- Modal Editar Sanción -->
+                            <div class="modal fade" id="editarSancionModal{{ $sancion->id }}" tabindex="-1">
+                                <div class="modal-dialog">
+                                    <div class="modal-content bg-dark text-white border-secondary">
+                                        <form action="{{ route('admin.sanciones.editar', $sancion->id) }}" method="POST">
+                                            @csrf
+                                            @method('PUT')
+                                            <div class="modal-header border-warning">
+                                                <h5 class="modal-title"><i class="bi bi-pencil-square text-warning"></i> Editar Sanción</h5>
+                                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <p class="small text-secondary">Editando sanción de: <strong class="text-white">{{ $sancion->usuario->nombre ?? 'Desconocido' }}</strong></p>
+                                                
+                                                <div class="mb-3">
+                                                    <label class="form-label">Motivo:</label>
+                                                    <textarea name="motivo" class="form-control bg-dark text-white border-secondary" rows="2" required>{{ $sancion->motivo }}</textarea>
+                                                </div>
+
+                                                <div class="row mb-3">
+                                                    <div class="col-6">
+                                                        <label class="form-label">Partidos de Suspensión:</label>
+                                                        <input type="number" name="partidos_suspension" class="form-control bg-dark text-white border-secondary" min="1" value="{{ $sancion->partidos_suspension }}" required>
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <label class="form-label">Partidos Cumplidos:</label>
+                                                        <input type="number" name="partidos_cumplidos" class="form-control bg-dark text-white border-secondary" min="0" value="{{ $sancion->partidos_cumplidos }}" required>
+                                                    </div>
+                                                </div>
+
+                                                <div class="mb-3">
+                                                    <label class="form-label">Estado:</label>
+                                                    <select name="estado" class="form-select bg-dark text-white border-secondary" required>
+                                                        <option value="activa" {{ $sancion->estado === 'activa' ? 'selected' : '' }}>Activa</option>
+                                                        <option value="cumplida" {{ $sancion->estado === 'cumplida' ? 'selected' : '' }}>Cumplida</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer border-secondary">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                                <button type="submit" class="btn btn-warning">Guardar Cambios</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
                         @empty
                             <tr>
-                                <td colspan="5" class="text-center py-5 text-secondary">
+                                <td colspan="6" class="text-center py-5 text-secondary">
                                     No hay sanciones registradas.
                                 </td>
                             </tr>

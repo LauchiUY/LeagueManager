@@ -196,6 +196,30 @@ class AdminController extends Controller
     }
 
     /**
+     * Edita una sanción existente
+     */
+    public function editarSancion(Request $request, $id)
+    {
+        $sancion = Sancion::findOrFail($id);
+
+        $request->validate([
+            'partidos_suspension' => 'required|integer|min:1',
+            'partidos_cumplidos' => 'required|integer|min:0',
+            'motivo' => 'required|string|max:255',
+            'estado' => 'required|in:activa,cumplida',
+        ]);
+
+        $sancion->update([
+            'partidos_suspension' => $request->partidos_suspension,
+            'partidos_cumplidos' => $request->partidos_cumplidos,
+            'motivo' => $request->motivo,
+            'estado' => $request->estado,
+        ]);
+
+        return back()->with('success', 'Sanción actualizada correctamente.');
+    }
+
+    /**
      * Lista las solicitudes de aplazamiento enviadas por los capitanes
      */
     public function aplazamientos()

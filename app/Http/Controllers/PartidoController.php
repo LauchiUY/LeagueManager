@@ -84,7 +84,7 @@ class PartidoController extends Controller
 
         $request->validate([
             'id_jugador' => 'required|exists:usuarios,id',
-            'tipo_evento' => 'required|in:Gol,Amarilla,Roja',
+            'tipo_evento' => 'required|in:Gol,Autogol,Amarilla,Roja',
             'minuto' => 'required|integer|min:1|max:120',
             'observaciones' => 'nullable|string|max:255'
         ]);
@@ -101,6 +101,29 @@ class PartidoController extends Controller
         if ($request->tipo_evento === 'Roja') {
             $sancionesService = new SancionesService();
             $sancionesService->aplicarSancionTarjetaRoja($request->id_jugador, $partido->id);
+        }
+
+        // Doble amarilla → roja automática + sanción
+        if ($request->tipo_evento === 'Amarilla') {
+            $amarillasEnPartido = EventoPartido::where('id_partido', $partido->id)
+                ->where('id_jugador', $request->id_jugador)
+                ->where('tipo_evento', 'Amarilla')
+                ->count();
+
+            if ($amarillasEnPartido >= 2) {
+                EventoPartido::create([
+                    'id_partido' => $partido->id,
+                    'id_jugador' => $request->id_jugador,
+                    'tipo_evento' => 'Roja',
+                    'minuto' => $request->minuto,
+                    'observaciones' => 'Roja automática por doble amarilla'
+                ]);
+
+                $sancionesService = new SancionesService();
+                $sancionesService->aplicarSancionTarjetaRoja($request->id_jugador, $partido->id);
+
+                return back()->with('success', '⚠️ Doble amarilla detectada → Tarjeta roja automática y sanción aplicada.');
+            }
         }
 
         return back()->with('success', 'Evento registrado correctamente.');

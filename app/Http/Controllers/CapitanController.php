@@ -39,7 +39,15 @@ class CapitanController extends Controller
             ->orderBy('fecha_hora', 'asc')
             ->get();
 
-        return view('capitan.mi-equipo', compact('equipo', 'partidos'));
+        // Cargar TODAS las sanciones de los jugadores de este equipo (activas + historial)
+        $jugadoresIds = $equipo->plantilla->pluck('id_usuario');
+        $sancionesEquipo = \App\Models\Sancion::with(['usuario', 'partidoOrigen'])
+            ->whereIn('id_usuario', $jugadoresIds)
+            ->orderBy('estado', 'asc')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return view('capitan.mi-equipo', compact('equipo', 'partidos', 'sancionesEquipo'));
     }
 
     /**
@@ -131,8 +139,21 @@ class CapitanController extends Controller
             ->delete();
 
         if ($request->has('jugadores') && is_array($request->jugadores)) {
+            // Validación server-side: rechazar jugadores con sanción activa
+            $sancionados = \App\Models\Sancion::whereIn('id_usuario', $request->jugadores)
+                ->where('estado', 'activa')
+                ->pluck('id_usuario')
+                ->toArray();
+
+            $jugadoresValidos = array_values(array_diff($request->jugadores, $sancionados));
+
+            if (count($sancionados) > 0) {
+                $nombresSancionados = \App\Models\Usuario::whereIn('id', $sancionados)->pluck('nombre')->join(', ');
+                return redirect()->back()->with('error', 'No se pueden convocar jugadores sancionados: ' . $nombresSancionados . '. Se han eliminado automáticamente de la selección.');
+            }
+
             $nuevasConvocatorias = [];
-            foreach ($request->jugadores as $jugadorId) {
+            foreach ($jugadoresValidos as $jugadorId) {
                 $nuevasConvocatorias[] = [
                     'id_partido' => $partidoId,
                     'id_equipo' => $equipo->id,

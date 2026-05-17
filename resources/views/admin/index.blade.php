@@ -133,7 +133,7 @@
             </a>
         </div>
         <div class="col-md-4">
-            <a href="/ver-resultados" target="_blank" class="text-decoration-none">
+            <a href="{{ route('admin.ver-resultados') }}" target="_blank" class="text-decoration-none">
                 <div class="card glass-card h-100 p-4 border-0 text-center">
                     <div class="rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 70px; height: 70px; background: rgba(13, 110, 253, 0.1); color: #0d6efd;">
                         <i class="bi bi-database fs-2"></i>

@@ -40,6 +40,9 @@
         background: rgba(255,255,255,0.05);
         border-color: rgba(255,255,255,0.1);
     }
+    .player-row.has-yellow {
+        border-left: 3px solid #ffc107;
+    }
     .action-btn {
         width: 35px;
         height: 35px;
@@ -48,6 +51,7 @@
         display: flex;
         align-items: center;
         justify-content: center;
+        font-size: 0.85rem;
     }
     .btn-gol {
         background: rgba(25, 135, 84, 0.2);
@@ -55,6 +59,12 @@
         border: 1px solid rgba(25, 135, 84, 0.5);
     }
     .btn-gol:hover { background: #198754; color: white; }
+    .btn-autogol {
+        background: rgba(108, 117, 125, 0.2);
+        color: #adb5bd;
+        border: 1px solid rgba(108, 117, 125, 0.5);
+    }
+    .btn-autogol:hover { background: #6c757d; color: white; }
     .btn-amarilla {
         background: rgba(255, 193, 7, 0.2);
         color: #ffc107;
@@ -67,6 +77,38 @@
         border: 1px solid rgba(220, 53, 69, 0.5);
     }
     .btn-roja:hover { background: #dc3545; color: white; }
+    .minuto-input {
+        width: 55px;
+        background: rgba(0,0,0,0.3);
+        border: 1px solid rgba(255,255,255,0.1);
+        color: white;
+        border-radius: 8px;
+        text-align: center;
+        font-size: 0.85rem;
+        padding: 4px;
+    }
+    .minuto-input::placeholder { color: rgba(255,255,255,0.3); }
+    .timeline-event {
+        border-left: 3px solid rgba(255,255,255,0.1);
+        padding-left: 20px;
+        position: relative;
+        margin-bottom: 15px;
+    }
+    .timeline-event::before {
+        content: '';
+        position: absolute;
+        left: -7px;
+        top: 8px;
+        width: 11px;
+        height: 11px;
+        border-radius: 50%;
+        background: var(--lm-primary);
+        border: 2px solid rgba(26, 27, 35, 0.6);
+    }
+    .timeline-event.event-gol::before { background: #198754; }
+    .timeline-event.event-autogol::before { background: #6c757d; }
+    .timeline-event.event-amarilla::before { background: #ffc107; }
+    .timeline-event.event-roja::before { background: #dc3545; }
 </style>
 @endsection
 
@@ -106,6 +148,10 @@
                 </div>
                 <div class="mt-3 text-muted-custom small">
                     <i class="bi bi-geo-alt-fill me-1"></i> {{ $partido->campo_pista }}
+                    <span class="mx-2">|</span>
+                    <span class="badge {{ $partido->estado === 'finalizado' || $partido->estado === 'jugado' ? 'bg-success' : 'bg-primary' }}">
+                        {{ strtoupper($partido->estado) }}
+                    </span>
                 </div>
             </div>
             <div class="col-md-4">
@@ -115,54 +161,75 @@
         </div>
     </div>
 
-    <!-- Dos Columnas de Jugadores -->
     <div class="row g-4 mb-5">
         <!-- Equipo Local -->
         <div class="col-lg-6">
             <div class="card glass-card h-100 border-0 p-4">
                 <h4 class="text-white title-font mb-4 text-center border-bottom pb-3" style="border-color: rgba(255,255,255,0.1) !important;">
-                    <i class="bi bi-shield-fill me-2" style="color: #ff2a5f;"></i> Plantilla Local
+                    <i class="bi bi-shield-fill me-2" style="color: #ff2a5f;"></i> Convocados Local
+                    <span class="badge bg-secondary ms-2">{{ $jugadoresLocal->count() }}</span>
                 </h4>
                 
-                @if($partido->equipoLocal && $partido->equipoLocal->plantilla)
-                    @foreach($partido->equipoLocal->plantilla as $jugador)
-                        <div class="player-row d-flex justify-content-between align-items-center">
+                @if($jugadoresLocal->isNotEmpty())
+                    @foreach($jugadoresLocal as $jugador)
+                        @php
+                            $amarillas = $amarillasPorJugador[$jugador->usuario->id] ?? 0;
+                        @endphp
+                        <div class="player-row d-flex justify-content-between align-items-center {{ $amarillas > 0 ? 'has-yellow' : '' }}">
                             <div class="d-flex align-items-center">
                                 <span class="badge bg-dark me-3" style="font-size: 1rem;">#{{ $jugador->dorsal ?? '?' }}</span>
                                 <div>
                                     <span class="text-white fw-bold d-block">{{ $jugador->usuario->nombre ?? 'Desconocido' }}</span>
+                                    @if($amarillas > 0)
+                                        <small class="text-warning"><i class="bi bi-square-fill me-1" style="font-size: 0.5rem;"></i>{{ $amarillas }} amarilla(s)</small>
+                                    @endif
                                 </div>
                             </div>
                             
-                            @if($partido->estado !== 'finalizado')
-                            <div class="d-flex gap-2">
-                                <form action="{{ route('arbitro.registrar_evento', $partido->id) }}" method="POST">
+                            @if(!in_array($partido->estado, ['finalizado', 'jugado']))
+                            <div class="d-flex gap-1 align-items-center">
+                                <input type="number" class="minuto-input" id="minuto_local_{{ $jugador->usuario->id }}" placeholder="Min" min="1" max="120">
+                                
+                                <form action="{{ route('arbitro.registrar_evento', $partido->id) }}" method="POST" class="d-inline">
                                     @csrf
                                     <input type="hidden" name="id_jugador" value="{{ $jugador->usuario->id }}">
                                     <input type="hidden" name="id_equipo" value="{{ $partido->equipoLocal->id }}">
-                                    <input type="hidden" name="tipo_evento" value="gol">
-                                    <button type="submit" class="btn action-btn btn-gol" title="Gol"><i class="bi bi-record-circle"></i></button>
+                                    <input type="hidden" name="tipo_evento" value="Gol">
+                                    <input type="hidden" name="minuto" class="minuto-hidden-local-{{ $jugador->usuario->id }}">
+                                    <button type="submit" class="btn action-btn btn-gol" title="Gol" onclick="this.form.querySelector('.minuto-hidden-local-{{ $jugador->usuario->id }}').value = document.getElementById('minuto_local_{{ $jugador->usuario->id }}').value"><i class="bi bi-record-circle"></i></button>
                                 </form>
-                                <form action="{{ route('arbitro.registrar_evento', $partido->id) }}" method="POST">
+                                <form action="{{ route('arbitro.registrar_evento', $partido->id) }}" method="POST" class="d-inline">
                                     @csrf
                                     <input type="hidden" name="id_jugador" value="{{ $jugador->usuario->id }}">
                                     <input type="hidden" name="id_equipo" value="{{ $partido->equipoLocal->id }}">
-                                    <input type="hidden" name="tipo_evento" value="tarjeta_amarilla">
-                                    <button type="submit" class="btn action-btn btn-amarilla" title="Tarjeta Amarilla"><i class="bi bi-square-fill"></i></button>
+                                    <input type="hidden" name="tipo_evento" value="Autogol">
+                                    <input type="hidden" name="minuto" class="minuto-hidden-local-{{ $jugador->usuario->id }}">
+                                    <button type="submit" class="btn action-btn btn-autogol" title="Autogol (en propia)" onclick="this.form.querySelector('.minuto-hidden-local-{{ $jugador->usuario->id }}').value = document.getElementById('minuto_local_{{ $jugador->usuario->id }}').value"><i class="bi bi-arrow-down-circle"></i></button>
                                 </form>
-                                <form action="{{ route('arbitro.registrar_evento', $partido->id) }}" method="POST">
+                                <form action="{{ route('arbitro.registrar_evento', $partido->id) }}" method="POST" class="d-inline">
                                     @csrf
                                     <input type="hidden" name="id_jugador" value="{{ $jugador->usuario->id }}">
                                     <input type="hidden" name="id_equipo" value="{{ $partido->equipoLocal->id }}">
-                                    <input type="hidden" name="tipo_evento" value="tarjeta_roja">
-                                    <button type="submit" class="btn action-btn btn-roja" title="Tarjeta Roja"><i class="bi bi-square-fill"></i></button>
+                                    <input type="hidden" name="tipo_evento" value="Amarilla">
+                                    <input type="hidden" name="minuto" class="minuto-hidden-local-{{ $jugador->usuario->id }}">
+                                    <button type="submit" class="btn action-btn btn-amarilla" title="Tarjeta Amarilla" onclick="this.form.querySelector('.minuto-hidden-local-{{ $jugador->usuario->id }}').value = document.getElementById('minuto_local_{{ $jugador->usuario->id }}').value"><i class="bi bi-square-fill"></i></button>
+                                </form>
+                                <form action="{{ route('arbitro.registrar_evento', $partido->id) }}" method="POST" class="d-inline">
+                                    @csrf
+                                    <input type="hidden" name="id_jugador" value="{{ $jugador->usuario->id }}">
+                                    <input type="hidden" name="id_equipo" value="{{ $partido->equipoLocal->id }}">
+                                    <input type="hidden" name="tipo_evento" value="Roja">
+                                    <input type="hidden" name="minuto" class="minuto-hidden-local-{{ $jugador->usuario->id }}">
+                                    <button type="submit" class="btn action-btn btn-roja" title="Tarjeta Roja" onclick="this.form.querySelector('.minuto-hidden-local-{{ $jugador->usuario->id }}').value = document.getElementById('minuto_local_{{ $jugador->usuario->id }}').value"><i class="bi bi-square-fill"></i></button>
                                 </form>
                             </div>
                             @endif
                         </div>
                     @endforeach
                 @else
-                    <p class="text-muted-custom text-center">No hay jugadores registrados.</p>
+                    <p class="text-muted-custom text-center">
+                        <i class="bi bi-exclamation-circle me-1"></i> No hay jugadores convocados para este equipo.
+                    </p>
                 @endif
             </div>
         </div>
@@ -171,55 +238,130 @@
         <div class="col-lg-6">
             <div class="card glass-card h-100 border-0 p-4">
                 <h4 class="text-white title-font mb-4 text-center border-bottom pb-3" style="border-color: rgba(255,255,255,0.1) !important;">
-                    <i class="bi bi-shield-fill me-2 text-primary"></i> Plantilla Visitante
+                    <i class="bi bi-shield-fill me-2 text-primary"></i> Convocados Visitante
+                    <span class="badge bg-secondary ms-2">{{ $jugadoresVisitante->count() }}</span>
                 </h4>
                 
-                @if($partido->equipoVisitante && $partido->equipoVisitante->plantilla)
-                    @foreach($partido->equipoVisitante->plantilla as $jugador)
-                        <div class="player-row d-flex justify-content-between align-items-center">
+                @if($jugadoresVisitante->isNotEmpty())
+                    @foreach($jugadoresVisitante as $jugador)
+                        @php
+                            $amarillas = $amarillasPorJugador[$jugador->usuario->id] ?? 0;
+                        @endphp
+                        <div class="player-row d-flex justify-content-between align-items-center {{ $amarillas > 0 ? 'has-yellow' : '' }}">
                             <div class="d-flex align-items-center">
                                 <span class="badge bg-dark me-3" style="font-size: 1rem;">#{{ $jugador->dorsal ?? '?' }}</span>
                                 <div>
                                     <span class="text-white fw-bold d-block">{{ $jugador->usuario->nombre ?? 'Desconocido' }}</span>
+                                    @if($amarillas > 0)
+                                        <small class="text-warning"><i class="bi bi-square-fill me-1" style="font-size: 0.5rem;"></i>{{ $amarillas }} amarilla(s)</small>
+                                    @endif
                                 </div>
                             </div>
                             
-                            @if($partido->estado !== 'finalizado')
-                            <div class="d-flex gap-2">
-                                <form action="{{ route('arbitro.registrar_evento', $partido->id) }}" method="POST">
+                            @if(!in_array($partido->estado, ['finalizado', 'jugado']))
+                            <div class="d-flex gap-1 align-items-center">
+                                <input type="number" class="minuto-input" id="minuto_visit_{{ $jugador->usuario->id }}" placeholder="Min" min="1" max="120">
+                                
+                                <form action="{{ route('arbitro.registrar_evento', $partido->id) }}" method="POST" class="d-inline">
                                     @csrf
                                     <input type="hidden" name="id_jugador" value="{{ $jugador->usuario->id }}">
                                     <input type="hidden" name="id_equipo" value="{{ $partido->equipoVisitante->id }}">
-                                    <input type="hidden" name="tipo_evento" value="gol">
-                                    <button type="submit" class="btn action-btn btn-gol" title="Gol"><i class="bi bi-record-circle"></i></button>
+                                    <input type="hidden" name="tipo_evento" value="Gol">
+                                    <input type="hidden" name="minuto" class="minuto-hidden-visit-{{ $jugador->usuario->id }}">
+                                    <button type="submit" class="btn action-btn btn-gol" title="Gol" onclick="this.form.querySelector('.minuto-hidden-visit-{{ $jugador->usuario->id }}').value = document.getElementById('minuto_visit_{{ $jugador->usuario->id }}').value"><i class="bi bi-record-circle"></i></button>
                                 </form>
-                                <form action="{{ route('arbitro.registrar_evento', $partido->id) }}" method="POST">
+                                <form action="{{ route('arbitro.registrar_evento', $partido->id) }}" method="POST" class="d-inline">
                                     @csrf
                                     <input type="hidden" name="id_jugador" value="{{ $jugador->usuario->id }}">
                                     <input type="hidden" name="id_equipo" value="{{ $partido->equipoVisitante->id }}">
-                                    <input type="hidden" name="tipo_evento" value="tarjeta_amarilla">
-                                    <button type="submit" class="btn action-btn btn-amarilla" title="Tarjeta Amarilla"><i class="bi bi-square-fill"></i></button>
+                                    <input type="hidden" name="tipo_evento" value="Autogol">
+                                    <input type="hidden" name="minuto" class="minuto-hidden-visit-{{ $jugador->usuario->id }}">
+                                    <button type="submit" class="btn action-btn btn-autogol" title="Autogol (en propia)" onclick="this.form.querySelector('.minuto-hidden-visit-{{ $jugador->usuario->id }}').value = document.getElementById('minuto_visit_{{ $jugador->usuario->id }}').value"><i class="bi bi-arrow-down-circle"></i></button>
                                 </form>
-                                <form action="{{ route('arbitro.registrar_evento', $partido->id) }}" method="POST">
+                                <form action="{{ route('arbitro.registrar_evento', $partido->id) }}" method="POST" class="d-inline">
                                     @csrf
                                     <input type="hidden" name="id_jugador" value="{{ $jugador->usuario->id }}">
                                     <input type="hidden" name="id_equipo" value="{{ $partido->equipoVisitante->id }}">
-                                    <input type="hidden" name="tipo_evento" value="tarjeta_roja">
-                                    <button type="submit" class="btn action-btn btn-roja" title="Tarjeta Roja"><i class="bi bi-square-fill"></i></button>
+                                    <input type="hidden" name="tipo_evento" value="Amarilla">
+                                    <input type="hidden" name="minuto" class="minuto-hidden-visit-{{ $jugador->usuario->id }}">
+                                    <button type="submit" class="btn action-btn btn-amarilla" title="Tarjeta Amarilla" onclick="this.form.querySelector('.minuto-hidden-visit-{{ $jugador->usuario->id }}').value = document.getElementById('minuto_visit_{{ $jugador->usuario->id }}').value"><i class="bi bi-square-fill"></i></button>
+                                </form>
+                                <form action="{{ route('arbitro.registrar_evento', $partido->id) }}" method="POST" class="d-inline">
+                                    @csrf
+                                    <input type="hidden" name="id_jugador" value="{{ $jugador->usuario->id }}">
+                                    <input type="hidden" name="id_equipo" value="{{ $partido->equipoVisitante->id }}">
+                                    <input type="hidden" name="tipo_evento" value="Roja">
+                                    <input type="hidden" name="minuto" class="minuto-hidden-visit-{{ $jugador->usuario->id }}">
+                                    <button type="submit" class="btn action-btn btn-roja" title="Tarjeta Roja" onclick="this.form.querySelector('.minuto-hidden-visit-{{ $jugador->usuario->id }}').value = document.getElementById('minuto_visit_{{ $jugador->usuario->id }}').value"><i class="bi bi-square-fill"></i></button>
                                 </form>
                             </div>
                             @endif
                         </div>
                     @endforeach
                 @else
-                    <p class="text-muted-custom text-center">No hay jugadores registrados.</p>
+                    <p class="text-muted-custom text-center">
+                        <i class="bi bi-exclamation-circle me-1"></i> No hay jugadores convocados para este equipo.
+                    </p>
                 @endif
             </div>
         </div>
     </div>
 
+    <!-- Timeline de Eventos -->
+    @if($partido->eventoPartido->count() > 0)
+    <div class="card glass-card border-0 p-4 mb-5">
+        <h4 class="text-white title-font mb-4 text-center border-bottom pb-3" style="border-color: rgba(255,255,255,0.1) !important;">
+            <i class="bi bi-clock-history me-2 text-warning"></i> Timeline de Eventos
+        </h4>
+        
+        @foreach($partido->eventoPartido->sortBy('minuto') as $evento)
+            @php
+                $esLocal = $jugadoresLocal->pluck('id_usuario')->contains($evento->id_jugador);
+                $eventClass = match($evento->tipo_evento) {
+                    'Gol' => 'event-gol',
+                    'Autogol' => 'event-autogol',
+                    'Amarilla' => 'event-amarilla',
+                    'Roja' => 'event-roja',
+                    default => ''
+                };
+                $eventIcon = match($evento->tipo_evento) {
+                    'Gol' => '⚽',
+                    'Autogol' => '⚽🔄',
+                    'Amarilla' => '🟨',
+                    'Roja' => '🟥',
+                    default => '📋'
+                };
+            @endphp
+            <div class="timeline-event {{ $eventClass }} d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center gap-3">
+                    <span class="text-muted-custom fw-bold" style="width: 40px;">{{ $evento->minuto }}'</span>
+                    <span class="fs-5">{{ $eventIcon }}</span>
+                    <div>
+                        <span class="text-white fw-bold">{{ $evento->jugador->nombre ?? 'Desconocido' }}</span>
+                        <span class="badge {{ $esLocal ? 'bg-primary' : 'bg-info text-dark' }} opacity-75 ms-2">
+                            {{ $esLocal ? 'Local' : 'Visitante' }}
+                        </span>
+                        @if($evento->observaciones)
+                            <br><small class="text-muted-custom">{{ $evento->observaciones }}</small>
+                        @endif
+                    </div>
+                </div>
+                @if(!in_array($partido->estado, ['finalizado', 'jugado']))
+                    <form action="{{ route('arbitro.eliminar_evento', [$partido->id, $evento->id]) }}" method="POST" onsubmit="return confirm('¿Eliminar este evento? El marcador se ajustará automáticamente.');">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill" title="Eliminar evento">
+                            <i class="bi bi-trash3"></i>
+                        </button>
+                    </form>
+                @endif
+            </div>
+        @endforeach
+    </div>
+    @endif
+
     <!-- Finalizar Acta -->
-    @if($partido->estado !== 'finalizado')
+    @if(!in_array($partido->estado, ['finalizado', 'jugado']))
     <div class="text-center mb-5">
         <form action="{{ route('arbitro.finalizar_partido', $partido->id) }}" method="POST" onsubmit="return confirm('¿Estás seguro de que quieres cerrar el acta? No podrás modificarla después y las sanciones se aplicarán automáticamente.');">
             @csrf

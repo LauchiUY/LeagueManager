@@ -83,6 +83,7 @@
                                 <select name="tipo_evento" class="form-select bg-dark text-white border-secondary" required>
                                     <option value="">Selecciona un evento...</option>
                                     <option value="Gol">⚽ Gol</option>
+                                    <option value="Autogol">⚽🔄 Autogol</option>
                                     <option value="Amarilla">🟨 Tarjeta Amarilla</option>
                                     <option value="Roja">🟥 Tarjeta Roja</option>
                                 </select>
@@ -192,6 +193,8 @@
                                         <div class="fs-4 me-3">
                                             @if($evento->tipo_evento === 'Gol')
                                                 ⚽
+                                            @elseif($evento->tipo_evento === 'Autogol')
+                                                ⚽🔄
                                             @elseif($evento->tipo_evento === 'Amarilla')
                                                 🟨
                                             @elseif($evento->tipo_evento === 'Roja')

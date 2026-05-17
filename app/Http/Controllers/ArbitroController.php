@@ -227,9 +227,34 @@ class ArbitroController extends Controller
             return redirect()->back()->with('error', 'El partido ya estaba finalizado.');
         }
 
-        // Por seguridad, si el partido no tuvo goles, lo ponemos a 0-0 en vez de null
-        $golesLocal = $partido->goles_local ?? 0;
-        $golesVisitante = $partido->goles_visitante ?? 0;
+        $partido->load('eventoPartido');
+
+        // Obtener jugadores de cada equipo
+        $jugadoresLocalIds = PlantillaJugador::where('id_equipo', $partido->id_local)
+            ->where('estado', 'activo')
+            ->pluck('id_usuario');
+        $jugadoresVisitanteIds = PlantillaJugador::where('id_equipo', $partido->id_visitante)
+            ->where('estado', 'activo')
+            ->pluck('id_usuario');
+
+        // Calcular goles desde los eventos registrados
+        $golesLocal = $partido->eventoPartido
+            ->where('tipo_evento', 'Gol')
+            ->whereIn('id_jugador', $jugadoresLocalIds)
+            ->count();
+        $golesLocal += $partido->eventoPartido
+            ->where('tipo_evento', 'Autogol')
+            ->whereIn('id_jugador', $jugadoresVisitanteIds)
+            ->count();
+
+        $golesVisitante = $partido->eventoPartido
+            ->where('tipo_evento', 'Gol')
+            ->whereIn('id_jugador', $jugadoresVisitanteIds)
+            ->count();
+        $golesVisitante += $partido->eventoPartido
+            ->where('tipo_evento', 'Autogol')
+            ->whereIn('id_jugador', $jugadoresLocalIds)
+            ->count();
 
         $partido->update([
             'estado' => 'finalizado',
@@ -246,6 +271,6 @@ class ArbitroController extends Controller
             // Ignorar errores de sanciones para no bloquear la finalización
         }
 
-        return redirect()->route('arbitro.partidos')->with('success', '¡Acta validada y cerrada correctamente! Sanciones y clasificación actualizadas.');
+        return redirect()->route('arbitro.partidos')->with('success', "¡Acta cerrada! Resultado oficial: {$golesLocal} - {$golesVisitante} (calculado desde eventos).");
     }
 }

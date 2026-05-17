@@ -130,7 +130,7 @@ class PartidoController extends Controller
     }
 
     /**
-     * Valida el acta del partido, evaluando el resultado final y activando el algoritmo de sanciones (CU-22).
+     * Valida el acta del partido, calculando el resultado desde los eventos registrados (CU-22).
      */
     public function validarActa(Request $request, $id, SancionesService $sancionesService)
     {
@@ -140,15 +140,37 @@ class PartidoController extends Controller
             return back()->with('error', 'El acta de este partido ya ha sido validada.');
         }
 
-        $request->validate([
-            'goles_local' => 'required|integer|min:0',
-            'goles_visitante' => 'required|integer|min:0'
-        ]);
+        // Obtener jugadores de cada equipo para calcular goles
+        $jugadoresLocalIds = PlantillaJugador::where('id_equipo', $partido->id_local)
+            ->where('estado', 'activo')
+            ->pluck('id_usuario');
+        $jugadoresVisitanteIds = PlantillaJugador::where('id_equipo', $partido->id_visitante)
+            ->where('estado', 'activo')
+            ->pluck('id_usuario');
 
-        // Guardar resultado y marcar como jugado
+        // Calcular goles desde los eventos registrados
+        $golesLocal = $partido->eventoPartido
+            ->where('tipo_evento', 'Gol')
+            ->whereIn('id_jugador', $jugadoresLocalIds)
+            ->count();
+        $golesLocal += $partido->eventoPartido
+            ->where('tipo_evento', 'Autogol')
+            ->whereIn('id_jugador', $jugadoresVisitanteIds)
+            ->count();
+
+        $golesVisitante = $partido->eventoPartido
+            ->where('tipo_evento', 'Gol')
+            ->whereIn('id_jugador', $jugadoresVisitanteIds)
+            ->count();
+        $golesVisitante += $partido->eventoPartido
+            ->where('tipo_evento', 'Autogol')
+            ->whereIn('id_jugador', $jugadoresLocalIds)
+            ->count();
+
+        // Guardar resultado calculado y marcar como jugado
         $partido->update([
-            'goles_local' => $request->goles_local,
-            'goles_visitante' => $request->goles_visitante,
+            'goles_local' => $golesLocal,
+            'goles_visitante' => $golesVisitante,
             'estado' => 'jugado'
         ]);
 
@@ -158,7 +180,7 @@ class PartidoController extends Controller
             $sancionesService->avanzarSancionesCumplidas($partido->id);
             
             return redirect()->route('partidos.index')
-                ->with('success', 'Acta validada con éxito. Resultado guardado y sanciones evaluadas.');
+                ->with('success', "Acta validada. Resultado oficial: {$golesLocal} - {$golesVisitante} (calculado desde eventos registrados).");
                 
         } catch (\Exception $e) {
             return redirect()->route('partidos.index')

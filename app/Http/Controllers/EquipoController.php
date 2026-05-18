@@ -52,7 +52,7 @@ class EquipoController extends Controller
     {
         $equipo = Equipo::with(['plantilla.usuario'])->findOrFail($id);
         
-        $partidos = \App\Models\Partido::with(['equipoLocal', 'equipoVisitante', 'competicion'])
+        $partidos = \App\Models\Partido::with(['equipoLocal', 'equipoVisitante', 'competicion', 'eventoPartido'])
             ->where(function ($q) use ($equipo) {
                 $q->where('id_local', $equipo->id)
                   ->orWhere('id_visitante', $equipo->id);

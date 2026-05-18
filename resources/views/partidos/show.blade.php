@@ -46,12 +46,29 @@
                 <div class="col-4">
                     <div class="d-flex justify-content-center align-items-center gap-3">
                         @php
-                            // Calcular goles actuales desde los eventos
-                            $golesLocalCalc = $partido->eventoPartido->where('tipo_evento', 'Gol')->whereIn('id_jugador', $jugadoresLocal->pluck('id_usuario'))->count();
-                            $golesVisitanteCalc = $partido->eventoPartido->where('tipo_evento', 'Gol')->whereIn('id_jugador', $jugadoresVisitante->pluck('id_usuario'))->count();
+                            // Extraer IDs de jugadores
+                            $idsLocal = $jugadoresLocal->pluck('id_usuario')->toArray();
+                            $idsVisitante = $jugadoresVisitante->pluck('id_usuario')->toArray();
                             
-                            $golesLocal = $partido->estado === 'jugado' ? $partido->goles_local : $golesLocalCalc;
-                            $golesVisitante = $partido->estado === 'jugado' ? $partido->goles_visitante : $golesVisitanteCalc;
+                            // Calcular goles reales desde los eventos (Goles a favor + Autogoles del rival)
+                            $golesLocalCalc = $partido->eventoPartido->where('tipo_evento', 'Gol')->whereIn('id_jugador', $idsLocal)->count()
+                                            + $partido->eventoPartido->where('tipo_evento', 'Autogol')->whereIn('id_jugador', $idsVisitante)->count();
+                            
+                            $golesVisitanteCalc = $partido->eventoPartido->where('tipo_evento', 'Gol')->whereIn('id_jugador', $idsVisitante)->count()
+                                                + $partido->eventoPartido->where('tipo_evento', 'Autogol')->whereIn('id_jugador', $idsLocal)->count();
+                            
+                            // Determinar si hay resolución administrativa
+                            $sancionAdministrativa = false;
+                            if ($partido->estado === 'jugado') {
+                                $golesLocal = $partido->goles_local;
+                                $golesVisitante = $partido->goles_visitante;
+                                if ($golesLocal !== $golesLocalCalc || $golesVisitante !== $golesVisitanteCalc) {
+                                    $sancionAdministrativa = true;
+                                }
+                            } else {
+                                $golesLocal = $golesLocalCalc;
+                                $golesVisitante = $golesVisitanteCalc;
+                            }
                         @endphp
                         <div class="display-3 fw-bold text-white bg-secondary bg-opacity-25 rounded px-4 py-2">{{ $golesLocal ?? 0 }}</div>
                         <div class="text-secondary fs-4">-</div>
@@ -63,6 +80,21 @@
                     <p class="text-secondary mb-0">Visitante</p>
                 </div>
             </div>
+            
+            @if($sancionAdministrativa)
+            <div class="row mt-4 justify-content-center">
+                <div class="col-10">
+                    <div class="alert alert-danger bg-danger text-white border-0 d-flex align-items-center mb-0 text-start">
+                        <i class="bi bi-exclamation-triangle-fill fs-3 me-3"></i>
+                        <div>
+                            <strong>Resolución del Comité Disciplinario</strong><br>
+                            El resultado oficial del partido fue modificado administrativamente debido a una infracción (Alineación Indebida).<br>
+                            <small class="opacity-75">Resultado original en la cancha: {{ $golesLocalCalc }} - {{ $golesVisitanteCalc }}</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            @endif
         </div>
     </div>
 

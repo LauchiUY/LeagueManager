@@ -9,6 +9,7 @@ use App\Models\Equipo;
 use App\Models\Usuario;
 use App\Models\EventoPartido;
 use App\Models\Sancion;
+use App\Models\PlantillaJugador;
 
 class Partido extends Model
 {
@@ -109,5 +110,30 @@ class Partido extends Model
         }
 
         return null; // En caso de empate
+    }
+
+    /**
+     * Comprueba si el resultado oficial difiere del resultado calculado
+     * a partir de los eventos (Goles/Autogoles) en la cancha.
+     * Esto ocurre cuando el sistema aplica una sanción automática de 0-3.
+     */
+    public function tieneResolucionAdministrativa(): bool
+    {
+        if ($this->estado !== 'jugado') {
+            return false;
+        }
+
+        $jugadoresLocalIds = PlantillaJugador::where('id_equipo', $this->id_local)
+            ->pluck('id_usuario');
+        $jugadoresVisitanteIds = PlantillaJugador::where('id_equipo', $this->id_visitante)
+            ->pluck('id_usuario');
+
+        $golesLocalCalc = $this->eventoPartido()->where('tipo_evento', 'Gol')->whereIn('id_jugador', $jugadoresLocalIds)->count()
+            + $this->eventoPartido()->where('tipo_evento', 'Autogol')->whereIn('id_jugador', $jugadoresVisitanteIds)->count();
+
+        $golesVisitanteCalc = $this->eventoPartido()->where('tipo_evento', 'Gol')->whereIn('id_jugador', $jugadoresVisitanteIds)->count()
+            + $this->eventoPartido()->where('tipo_evento', 'Autogol')->whereIn('id_jugador', $jugadoresLocalIds)->count();
+
+        return ($this->goles_local !== $golesLocalCalc || $this->goles_visitante !== $golesVisitanteCalc);
     }
 }

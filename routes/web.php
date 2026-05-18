@@ -73,6 +73,9 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
 
     Route::get('/aplazamientos', [AdminController::class, 'aplazamientos'])->name('aplazamientos');
     Route::post('/aplazamientos/{id}/gestionar', [AdminController::class, 'gestionarAplazamiento'])->name('aplazamientos.gestionar');
+
+    Route::get('/usuarios', [AdminController::class, 'usuarios'])->name('usuarios');
+    Route::post('/usuarios/{id}/rol', [AdminController::class, 'cambiarRol'])->name('usuarios.rol');
 });
 
 // Perfil de usuario general

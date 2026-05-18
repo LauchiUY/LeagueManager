@@ -250,4 +250,33 @@ class AdminController extends Controller
 
         return back()->with('success', 'Solicitud de aplazamiento procesada: ' . ucfirst($request->accion));
     }
+    /**
+     * Lista todos los usuarios para gestionar roles
+     */
+    public function usuarios()
+    {
+        $usuarios = Usuario::orderBy('rol')->orderBy('nombre')->paginate(20);
+        return view('admin.usuarios', compact('usuarios'));
+    }
+
+    /**
+     * Cambia el rol de un usuario
+     */
+    public function cambiarRol(Request $request, $id)
+    {
+        $usuario = Usuario::findOrFail($id);
+        
+        $request->validate([
+            'rol' => 'required|in:admin,arbitro,capitan,jugador'
+        ]);
+
+        // Evitar que el admin se quite a sí mismo su rol (si es el único o por error)
+        if ($usuario->id === Auth::id() && $request->rol !== 'admin') {
+            return back()->with('error', 'No puedes quitarte el rol de administrador a ti mismo.');
+        }
+
+        $usuario->update(['rol' => $request->rol]);
+
+        return back()->with('success', 'Rol de ' . $usuario->nombre . ' cambiado a ' . ucfirst($request->rol) . ' correctamente.');
+    }
 }

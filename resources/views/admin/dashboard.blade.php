@@ -48,22 +48,28 @@
     </div>
 
     <div class="row g-4 mt-2">
-        <div class="col-md-4">
+        <div class="col-md-3">
             <a href="{{ route('admin.partidos') }}" class="btn btn-outline-light w-100 py-3 border-secondary">
                 <i class="bi bi-calendar-event fs-4 d-block mb-2 text-info"></i>
                 Supervisar Partidos
             </a>
         </div>
-        <div class="col-md-4">
+        <div class="col-md-3">
             <a href="{{ route('admin.sanciones') }}" class="btn btn-outline-light w-100 py-3 border-secondary">
                 <i class="bi bi-hammer fs-4 d-block mb-2 text-danger"></i>
-                Comité Disciplinario (Sanciones)
+                Sanciones
             </a>
         </div>
-        <div class="col-md-4">
+        <div class="col-md-3">
             <a href="{{ route('admin.aplazamientos') }}" class="btn btn-outline-light w-100 py-3 border-secondary">
                 <i class="bi bi-clock-history fs-4 d-block mb-2 text-warning"></i>
-                Solicitudes de Aplazamiento
+                Aplazamientos
+            </a>
+        </div>
+        <div class="col-md-3">
+            <a href="{{ route('admin.usuarios') }}" class="btn btn-outline-light w-100 py-3 border-secondary">
+                <i class="bi bi-people-fill fs-4 d-block mb-2 text-success"></i>
+                Gestión de Roles
             </a>
         </div>
     </div>

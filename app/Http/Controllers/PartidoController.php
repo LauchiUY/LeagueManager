@@ -89,6 +89,16 @@ class PartidoController extends Controller
             'observaciones' => 'nullable|string|max:255'
         ]);
 
+        // Verificar si el jugador ya ha sido expulsado
+        $estaExpulsado = EventoPartido::where('id_partido', $partido->id)
+            ->where('id_jugador', $request->id_jugador)
+            ->where('tipo_evento', 'Roja')
+            ->exists();
+
+        if ($estaExpulsado) {
+            return back()->with('error', 'No se pueden añadir más eventos a un jugador que ya ha sido expulsado.');
+        }
+
         EventoPartido::create([
             'id_partido' => $partido->id,
             'id_jugador' => $request->id_jugador,
@@ -178,6 +188,15 @@ class PartidoController extends Controller
             // Evaluar sanciones y acumulación de partidos
             $sancionesService->evaluarAlineacionesIndebidas($partido->id);
             $sancionesService->avanzarSancionesCumplidas($partido->id);
+            
+            // Automatización: Finalizar competición si ya no quedan partidos pendientes
+            $partidosPendientes = Partido::where('id_competicion', $partido->id_competicion)
+                ->where('estado', '!=', 'jugado')
+                ->count();
+                
+            if ($partidosPendientes === 0) {
+                $partido->competicion->update(['estado' => 'finalizada']);
+            }
             
             return redirect()->route('partidos.index')
                 ->with('success', "Acta validada. Resultado oficial: {$golesLocal} - {$golesVisitante} (calculado desde eventos registrados).");

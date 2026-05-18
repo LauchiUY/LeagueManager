@@ -58,8 +58,7 @@ class EquipoController extends Controller
                   ->orWhere('id_visitante', $equipo->id);
             })
             ->orderBy('fecha_hora', 'desc')
-            ->take(10)
-            ->get();
+            ->paginate(5);
             
         return view('equipos.show', compact('equipo', 'partidos'));
     }

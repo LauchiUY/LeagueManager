@@ -145,6 +145,14 @@
                             <div class="p-4 text-center text-muted-custom">No hay partidos registrados.</div>
                         @endforelse
                     </div>
+                    
+                    @if($partidos->hasPages())
+                    <div class="card-footer bg-transparent border-top p-3" style="border-color: rgba(255,255,255,0.05) !important;">
+                        <div class="d-flex justify-content-center pagination-custom">
+                            {{ $partidos->links() }}
+                        </div>
+                    </div>
+                    @endif
                 </div>
             </div>
         </div>

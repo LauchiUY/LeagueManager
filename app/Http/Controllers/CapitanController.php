@@ -37,7 +37,7 @@ class CapitanController extends Controller
             })
             ->whereIn('estado', ['pendiente', 'en_curso'])
             ->orderBy('fecha_hora', 'asc')
-            ->get();
+            ->paginate(5);
 
         // Cargar TODAS las sanciones de los jugadores de este equipo (activas + historial)
         $jugadoresIds = $equipo->plantilla->pluck('id_usuario');

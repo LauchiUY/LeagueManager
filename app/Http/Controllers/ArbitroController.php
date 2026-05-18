@@ -108,6 +108,19 @@ class ArbitroController extends Controller
             $partido->update(['estado' => 'en_curso']);
         }
 
+        // Contar amarillas previas solo para el caso de amarilla
+        $amarillasPrevias = 0;
+        if ($request->tipo_evento === 'Amarilla') {
+            $amarillasPrevias = EventoPartido::where('id_partido', $partido->id)
+                ->where('id_jugador', $request->id_jugador)
+                ->where('tipo_evento', 'Amarilla')
+                ->count();
+
+            if ($amarillasPrevias >= 2) {
+                return redirect()->back()->with('error', 'El jugador ya tiene dos amarillas en este partido. No se puede registrar otra amarilla.');
+            }
+        }
+
         // Registrar el evento
         EventoPartido::create([
             'id_partido' => $partido->id,
@@ -141,28 +154,21 @@ class ArbitroController extends Controller
         }
 
         // Lógica de doble amarilla → roja automática + sanción
-        if ($request->tipo_evento === 'Amarilla') {
-            $amarillasEnPartido = EventoPartido::where('id_partido', $partido->id)
-                ->where('id_jugador', $request->id_jugador)
-                ->where('tipo_evento', 'Amarilla')
-                ->count();
+        if ($request->tipo_evento === 'Amarilla' && $amarillasPrevias === 1) {
+            // Crear evento de roja automática por doble amarilla
+            EventoPartido::create([
+                'id_partido' => $partido->id,
+                'id_jugador' => $request->id_jugador,
+                'tipo_evento' => 'Roja',
+                'minuto' => $minuto,
+                'observaciones' => 'Roja automática por doble amarilla'
+            ]);
 
-            if ($amarillasEnPartido >= 2) {
-                // Crear evento de roja automática por doble amarilla
-                EventoPartido::create([
-                    'id_partido' => $partido->id,
-                    'id_jugador' => $request->id_jugador,
-                    'tipo_evento' => 'Roja',
-                    'minuto' => $minuto,
-                    'observaciones' => 'Roja automática por doble amarilla'
-                ]);
+            // Aplicar sanción
+            $sancionesService = new SancionesService();
+            $sancionesService->aplicarSancionTarjetaRoja($request->id_jugador, $partido->id);
 
-                // Aplicar sanción
-                $sancionesService = new SancionesService();
-                $sancionesService->aplicarSancionTarjetaRoja($request->id_jugador, $partido->id);
-
-                return redirect()->back()->with('success', '⚠️ Doble amarilla detectada → Tarjeta roja automática y sanción aplicada.');
-            }
+            return redirect()->back()->with('success', '⚠️ Doble amarilla detectada → Tarjeta roja automática y sanción aplicada.');
         }
 
         return redirect()->back()->with('success', 'Evento registrado correctamente.');

@@ -80,16 +80,17 @@
                     <p class="text-secondary mb-0">Visitante</p>
                 </div>
             </div>
-            
             @if($sancionAdministrativa)
             <div class="row mt-4 justify-content-center">
-                <div class="col-10">
-                    <div class="alert alert-danger bg-danger text-white border-0 d-flex align-items-center mb-0 text-start">
-                        <i class="bi bi-exclamation-triangle-fill fs-3 me-3"></i>
+                <div class="col-10 col-md-8">
+                    <div class="p-3 rounded-4 border d-flex align-items-center text-start" style="background: rgba(220, 53, 69, 0.1); border-color: rgba(220, 53, 69, 0.3) !important; backdrop-filter: blur(10px);">
+                        <div class="rounded-circle d-flex align-items-center justify-content-center me-3 flex-shrink-0" style="width: 45px; height: 45px; background: rgba(220, 53, 69, 0.2);">
+                            <i class="bi bi-shield-exclamation text-danger fs-5"></i>
+                        </div>
                         <div>
-                            <strong>Resolución del Comité Disciplinario</strong><br>
-                            El resultado oficial del partido fue modificado administrativamente debido a una infracción (Alineación Indebida).<br>
-                            <small class="opacity-75">Resultado original en la cancha: {{ $golesLocalCalc }} - {{ $golesVisitanteCalc }}</small>
+                            <div class="text-white fw-bold mb-1" style="font-family: 'Outfit', sans-serif; letter-spacing: 0.5px;">Resolución Administrativa</div>
+                            <div class="text-secondary" style="font-size: 0.85rem;">El marcador oficial fue fijado en 0-3 por sanción disciplinaria (Alineación indebida).</div>
+                            <div class="text-secondary" style="font-size: 0.75rem;"><i class="bi bi-info-circle me-1"></i>Resultado original en la cancha: {{ $golesLocalCalc }} - {{ $golesVisitanteCalc }}</div>
                         </div>
                     </div>
                 </div>

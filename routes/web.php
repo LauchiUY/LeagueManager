@@ -69,6 +69,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
 
     Route::get('/sanciones', [AdminController::class, 'sanciones'])->name('sanciones');
     Route::post('/sanciones/crear', [AdminController::class, 'crearSancion'])->name('sanciones.crear');
+    Route::put('/sanciones/{id}', [AdminController::class, 'editarSancion'])->name('sanciones.editar');
 
     Route::get('/aplazamientos', [AdminController::class, 'aplazamientos'])->name('aplazamientos');
     Route::post('/aplazamientos/{id}/gestionar', [AdminController::class, 'gestionarAplazamiento'])->name('aplazamientos.gestionar');
@@ -84,6 +85,7 @@ Route::middleware(['auth', 'role:arbitro'])->prefix('arbitro')->name('arbitro.')
     Route::get('/partidos', [ArbitroController::class, 'index'])->name('partidos');
     Route::get('/acta/{partido}', [ArbitroController::class, 'acta'])->name('acta');
     Route::post('/acta/{partido}/evento', [ArbitroController::class, 'registrarEvento'])->name('registrar_evento');
+    Route::delete('/acta/{partido}/evento/{evento}', [ArbitroController::class, 'eliminarEvento'])->name('eliminar_evento');
     Route::post('/acta/{partido}/finalizar', [ArbitroController::class, 'finalizarPartido'])->name('finalizar_partido');
 });
 
@@ -100,7 +102,7 @@ Route::get('/solo-admins', function () {
 })->middleware(['auth', 'role:admin']);
 
 // Dashboard visual temporal para ver la Base de Datos
-Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
+Route::middleware(['auth', 'role:admin'])->get('/admin/ver-resultados', function () {
     $partidos = \App\Models\Partido::with(['equipoLocal', 'equipoVisitante'])->orderBy('jornada')->get();
     $sanciones = \App\Models\Sancion::with('usuario')->get();
 
@@ -126,14 +128,14 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
         $html .= "<tr><td>{$nombre}</td><td>{$s->motivo}</td><td>{$s->partidos_suspension} Partidos</td></tr>";
     }
     if ($sanciones->isEmpty()) {
-        $html .= "<tr><td colspan='3'>Aún no se han ejecutado sanciones. Ve a /admin/test-sanciones primero.</td></tr>";
+        $html .= "<tr><td colspan='3'>Aún no se han ejecutado sanciones.</td></tr>";
     }
     $html .= "</table>";
 
     $html .= "</div></body>";
 
     return response($html);
-});
+})->name('admin.ver-resultados');
 
 // Marcar notificación como leída
 Route::post('/notificaciones/{id}/leer', function ($id) {

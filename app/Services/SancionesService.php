@@ -166,6 +166,10 @@ class SancionesService
         foreach ($jugadores as $idJugador) {
             $sanciones = Sancion::where('id_usuario', $idJugador)
                 ->where('estado', 'activa')
+                ->where(function ($q) use ($partidoId) {
+                    $q->where('id_partido_origen', '!=', $partidoId)
+                      ->orWhereNull('id_partido_origen');
+                })
                 ->get();
 
             foreach ($sanciones as $sancion) {

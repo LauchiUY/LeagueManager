@@ -83,6 +83,7 @@
                                 <select name="tipo_evento" class="form-select bg-dark text-white border-secondary" required>
                                     <option value="">Selecciona un evento...</option>
                                     <option value="Gol">⚽ Gol</option>
+                                    <option value="Autogol">⚽🔄 Autogol</option>
                                     <option value="Amarilla">🟨 Tarjeta Amarilla</option>
                                     <option value="Roja">🟥 Tarjeta Roja</option>
                                 </select>
@@ -127,21 +128,29 @@
                         <i class="bi bi-check-circle text-success me-2"></i> Validar Acta
                     </div>
                     <div class="card-body">
-                        <p class="text-secondary small mb-3">Confirma el resultado final para cerrar y validar el acta. Esto evaluará automáticamente las sanciones por alineaciones indebidas.</p>
+                        <p class="text-secondary small mb-3">El resultado se calcula automáticamente desde los eventos registrados (goles y autogoles). Ya no podrás modificar el acta tras validarla.</p>
                         
-                        <form action="{{ route('partidos.validar', $partido->id) }}" method="POST" onsubmit="return confirm('¿Estás seguro de validar el acta? Ya no podrás añadir eventos y el resultado será oficial.');">
-                            @csrf
-                            <div class="row mb-3">
-                                <div class="col-6">
-                                    <label class="form-label text-secondary">Goles Local</label>
-                                    <input type="number" name="goles_local" class="form-control bg-dark text-white border-secondary" value="{{ $golesLocalCalc }}" min="0" required>
-                                </div>
-                                <div class="col-6">
-                                    <label class="form-label text-secondary">Goles Visitante</label>
-                                    <input type="number" name="goles_visitante" class="form-control bg-dark text-white border-secondary" value="{{ $golesVisitanteCalc }}" min="0" required>
-                                </div>
+                        <div class="row mb-3 text-center">
+                            <div class="col-5">
+                                <h5 class="text-white fw-bold">{{ $partido->equipoLocal->nombre ?? 'Local' }}</h5>
+                                <span class="display-5 text-white fw-bolder">{{ $golesLocalCalc }}</span>
                             </div>
-                            <button type="submit" class="btn btn-success w-100 fw-bold">Validar Acta</button>
+                            <div class="col-2 d-flex align-items-center justify-content-center">
+                                <span class="text-secondary fs-3">-</span>
+                            </div>
+                            <div class="col-5">
+                                <h5 class="text-white fw-bold">{{ $partido->equipoVisitante->nombre ?? 'Visitante' }}</h5>
+                                <span class="display-5 text-white fw-bolder">{{ $golesVisitanteCalc }}</span>
+                            </div>
+                        </div>
+
+                        <div class="alert alert-secondary bg-secondary bg-opacity-10 text-secondary border-secondary small text-center mb-3">
+                            <i class="bi bi-info-circle me-1"></i> Este resultado se ha calculado a partir de los <strong>{{ $partido->eventoPartido->whereIn('tipo_evento', ['Gol', 'Autogol'])->count() }} eventos de gol</strong> registrados. Si falta algún gol, regístralo antes de validar.
+                        </div>
+
+                        <form action="{{ route('partidos.validar', $partido->id) }}" method="POST" onsubmit="return confirm('¿Estás seguro de validar el acta con resultado {{ $golesLocalCalc }} - {{ $golesVisitanteCalc }}? Ya no podrás añadir eventos.');">
+                            @csrf
+                            <button type="submit" class="btn btn-success w-100 fw-bold py-3"><i class="bi bi-lock-fill me-2"></i>Validar Acta ({{ $golesLocalCalc }} - {{ $golesVisitanteCalc }})</button>
                         </form>
                     </div>
                 </div>
@@ -192,6 +201,8 @@
                                         <div class="fs-4 me-3">
                                             @if($evento->tipo_evento === 'Gol')
                                                 ⚽
+                                            @elseif($evento->tipo_evento === 'Autogol')
+                                                ⚽🔄
                                             @elseif($evento->tipo_evento === 'Amarilla')
                                                 🟨
                                             @elseif($evento->tipo_evento === 'Roja')

@@ -161,6 +161,73 @@
             </div>
         </div>
     </div>
+
+    <!-- Sanciones del Equipo -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card bg-dark border-secondary shadow-sm">
+                <div class="card-header border-secondary text-white bg-transparent fw-bold py-3">
+                    <i class="bi bi-exclamation-triangle-fill text-danger me-2"></i> Sanciones del Equipo
+                    @if(isset($sancionesEquipo) && $sancionesEquipo->where('estado', 'activa')->count() > 0)
+                        <span class="badge bg-danger ms-2">{{ $sancionesEquipo->where('estado', 'activa')->count() }} activa(s)</span>
+                    @endif
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-dark table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Jugador</th>
+                                    <th>Motivo</th>
+                                    <th>Progreso</th>
+                                    <th>Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse($sancionesEquipo ?? [] as $sancion)
+                                    <tr class="align-middle">
+                                        <td>
+                                            <div class="fw-bold text-white">{{ $sancion->usuario->nombre ?? 'Desconocido' }}</div>
+                                            @if($sancion->partidoOrigen)
+                                                <small class="text-secondary">Jornada {{ $sancion->partidoOrigen->jornada }}</small>
+                                            @else
+                                                <small class="text-danger">Sanción Manual</small>
+                                            @endif
+                                        </td>
+                                        <td class="text-secondary">{{ $sancion->motivo }}</td>
+                                        <td>
+                                            <div class="d-flex align-items-center gap-2">
+                                                <div class="progress flex-grow-1 bg-secondary" style="height: 8px;">
+                                                    @php
+                                                        $porcentaje = $sancion->partidos_suspension > 0 ? ($sancion->partidos_cumplidos / $sancion->partidos_suspension) * 100 : 100;
+                                                    @endphp
+                                                    <div class="progress-bar {{ $sancion->estado === 'activa' ? 'bg-danger' : 'bg-success' }}" style="width: {{ $porcentaje }}%"></div>
+                                                </div>
+                                                <span class="small text-white">{{ $sancion->partidos_cumplidos }}/{{ $sancion->partidos_suspension }}</span>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            @if($sancion->estado === 'activa')
+                                                <span class="badge bg-danger">Activa</span>
+                                            @else
+                                                <span class="badge bg-success">Cumplida</span>
+                                            @endif
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="4" class="text-center py-4 text-secondary">
+                                            <i class="bi bi-check-circle me-1"></i> No hay sanciones registradas para tu equipo.
+                                        </td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- Modal Añadir Jugador -->

@@ -19,6 +19,10 @@ RUN apt-get update && apt-get install -y \
 # Habilitar mod_rewrite de Apache
 RUN a2enmod rewrite
 
+# Asegurar que solo un MPM esté activo (evita "More than one MPM loaded")
+RUN a2dismod mpm_worker mpm_event || true
+RUN a2enmod mpm_prefork
+
 # Configurar DocumentRoot para Laravel (carpeta public)
 ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
 RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf

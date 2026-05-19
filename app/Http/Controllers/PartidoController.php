@@ -194,7 +194,7 @@ class PartidoController extends Controller
                 ->where('estado', '!=', 'jugado')
                 ->count();
                 
-            if ($partidosPendientes === 0) {
+            if ($partidosPendientes === 0 && $partido->competicion->estado === 'en_curso') {
                 $partido->competicion->update(['estado' => 'finalizada']);
             }
             

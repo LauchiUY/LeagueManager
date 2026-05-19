@@ -124,8 +124,10 @@ class Partido extends Model
         }
 
         $jugadoresLocalIds = PlantillaJugador::where('id_equipo', $this->id_local)
+            ->where('estado', 'activo')
             ->pluck('id_usuario');
         $jugadoresVisitanteIds = PlantillaJugador::where('id_equipo', $this->id_visitante)
+            ->where('estado', 'activo')
             ->pluck('id_usuario');
 
         $golesLocalCalc = $this->eventoPartido()->where('tipo_evento', 'Gol')->whereIn('id_jugador', $jugadoresLocalIds)->count()

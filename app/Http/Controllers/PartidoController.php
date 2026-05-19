@@ -6,6 +6,7 @@ use App\Models\Partido;
 use App\Models\EventoPartido;
 use App\Models\PlantillaJugador;
 use App\Services\SancionesService;
+use App\Models\Convocatoria;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -51,18 +52,26 @@ class PartidoController extends Controller
             abort(403, 'No estás autorizado para gestionar este partido.');
         }
 
-        // Obtener jugadores de ambas plantillas
+        // Obtener IDs de jugadores convocados
+        $convocadosIds = Convocatoria::where('id_partido', $partido->id)->pluck('id_usuario')->toArray();
+
+        // Obtener jugadores de ambas plantillas, solo si están en la convocatoria
         $jugadoresLocal = PlantillaJugador::with('usuario')
             ->where('id_equipo', $partido->id_local)
             ->where('estado', 'activo')
+            ->whereIn('id_usuario', $convocadosIds)
             ->get();
             
         $jugadoresVisitante = PlantillaJugador::with('usuario')
             ->where('id_equipo', $partido->id_visitante)
             ->where('estado', 'activo')
+            ->whereIn('id_usuario', $convocadosIds)
             ->get();
 
-        return view('partidos.show', compact('partido', 'jugadoresLocal', 'jugadoresVisitante'));
+        $tieneConvocatoriaLocal = Convocatoria::where('id_partido', $partido->id)->where('id_equipo', $partido->id_local)->exists();
+        $tieneConvocatoriaVisitante = Convocatoria::where('id_partido', $partido->id)->where('id_equipo', $partido->id_visitante)->exists();
+
+        return view('partidos.show', compact('partido', 'jugadoresLocal', 'jugadoresVisitante', 'tieneConvocatoriaLocal', 'tieneConvocatoriaVisitante'));
     }
 
     /**
@@ -148,6 +157,14 @@ class PartidoController extends Controller
 
         if ($partido->estado === 'jugado') {
             return back()->with('error', 'El acta de este partido ya ha sido validada.');
+        }
+
+        // Verificar que ambos equipos tengan convocatoria
+        $tieneConvocatoriaLocal = Convocatoria::where('id_partido', $partido->id)->where('id_equipo', $partido->id_local)->exists();
+        $tieneConvocatoriaVisitante = Convocatoria::where('id_partido', $partido->id)->where('id_equipo', $partido->id_visitante)->exists();
+
+        if (!$tieneConvocatoriaLocal || !$tieneConvocatoriaVisitante) {
+            return back()->with('error', 'No se puede validar el acta. Ambos equipos deben haber presentado su convocatoria.');
         }
 
         // Obtener jugadores de cada equipo para calcular goles

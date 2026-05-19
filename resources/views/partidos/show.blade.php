@@ -103,13 +103,26 @@
         <!-- Columna Izquierda: Formularios -->
         <div class="col-lg-5">
             @if($partido->estado !== 'jugado')
-                <!-- Añadir Evento -->
-                <div class="card bg-dark border-secondary mb-4 shadow-sm">
-                    <div class="card-header border-secondary text-white bg-transparent fw-bold py-3">
-                        <i class="bi bi-plus-circle text-primary me-2"></i> Añadir Evento al Acta
+                @if(!$tieneConvocatoriaLocal || !$tieneConvocatoriaVisitante)
+                    <div class="alert alert-warning bg-warning bg-opacity-10 text-warning border-warning border-opacity-50 shadow-sm p-4 rounded-3 mb-4">
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="bi bi-exclamation-triangle-fill fs-4 me-2"></i>
+                            <h5 class="mb-0 fw-bold">Convocatorias Pendientes</h5>
+                        </div>
+                        <p class="mb-2 text-white">Para poder gestionar el acta, ambos equipos deben haber confirmado su convocatoria.</p>
+                        <ul class="list-unstyled mb-0 small">
+                            <li><i class="bi {{ $tieneConvocatoriaLocal ? 'bi-check-circle-fill text-success' : 'bi-x-circle-fill text-danger' }} me-2"></i> <strong>{{ $partido->equipoLocal ? $partido->equipoLocal->nombre : 'Local' }}</strong></li>
+                            <li><i class="bi {{ $tieneConvocatoriaVisitante ? 'bi-check-circle-fill text-success' : 'bi-x-circle-fill text-danger' }} me-2"></i> <strong>{{ $partido->equipoVisitante ? $partido->equipoVisitante->nombre : 'Visitante' }}</strong></li>
+                        </ul>
                     </div>
-                    <div class="card-body">
-                        <form action="{{ route('partidos.evento.store', $partido->id) }}" method="POST">
+                @else
+                    <!-- Añadir Evento -->
+                    <div class="card bg-dark border-secondary mb-4 shadow-sm">
+                        <div class="card-header border-secondary text-white bg-transparent fw-bold py-3">
+                            <i class="bi bi-plus-circle text-primary me-2"></i> Añadir Evento al Acta
+                        </div>
+                        <div class="card-body">
+                            <form action="{{ route('partidos.evento.store', $partido->id) }}" method="POST">
                             @csrf
                             <div class="mb-3">
                                 <label class="form-label text-secondary">Tipo de Evento</label>
@@ -187,6 +200,7 @@
                         </form>
                     </div>
                 </div>
+                @endif
             @endif
 
             <!-- Foto del Acta Física -->

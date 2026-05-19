@@ -6,6 +6,7 @@ use App\Models\Partido;
 use App\Models\EventoPartido;
 use App\Models\PlantillaJugador;
 use App\Services\SancionesService;
+use App\Models\Convocatoria;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -51,18 +52,26 @@ class PartidoController extends Controller
             abort(403, 'No estás autorizado para gestionar este partido.');
         }
 
-        // Obtener jugadores de ambas plantillas
+        // Obtener IDs de jugadores convocados
+        $convocadosIds = Convocatoria::where('id_partido', $partido->id)->pluck('id_usuario')->toArray();
+
+        // Obtener jugadores de ambas plantillas, solo si están en la convocatoria
         $jugadoresLocal = PlantillaJugador::with('usuario')
             ->where('id_equipo', $partido->id_local)
             ->where('estado', 'activo')
+            ->whereIn('id_usuario', $convocadosIds)
             ->get();
             
         $jugadoresVisitante = PlantillaJugador::with('usuario')
             ->where('id_equipo', $partido->id_visitante)
             ->where('estado', 'activo')
+            ->whereIn('id_usuario', $convocadosIds)
             ->get();
 
-        return view('partidos.show', compact('partido', 'jugadoresLocal', 'jugadoresVisitante'));
+        $tieneConvocatoriaLocal = Convocatoria::where('id_partido', $partido->id)->where('id_equipo', $partido->id_local)->exists();
+        $tieneConvocatoriaVisitante = Convocatoria::where('id_partido', $partido->id)->where('id_equipo', $partido->id_visitante)->exists();
+
+        return view('partidos.show', compact('partido', 'jugadoresLocal', 'jugadoresVisitante', 'tieneConvocatoriaLocal', 'tieneConvocatoriaVisitante'));
     }
 
     /**
@@ -88,6 +97,16 @@ class PartidoController extends Controller
             'minuto' => 'required|integer|min:1|max:120',
             'observaciones' => 'nullable|string|max:255'
         ]);
+
+        // Verificar si el jugador ya ha sido expulsado
+        $estaExpulsado = EventoPartido::where('id_partido', $partido->id)
+            ->where('id_jugador', $request->id_jugador)
+            ->where('tipo_evento', 'Roja')
+            ->exists();
+
+        if ($estaExpulsado) {
+            return back()->with('error', 'No se pueden añadir más eventos a un jugador que ya ha sido expulsado.');
+        }
 
         EventoPartido::create([
             'id_partido' => $partido->id,
@@ -140,6 +159,14 @@ class PartidoController extends Controller
             return back()->with('error', 'El acta de este partido ya ha sido validada.');
         }
 
+        // Verificar que ambos equipos tengan convocatoria
+        $tieneConvocatoriaLocal = Convocatoria::where('id_partido', $partido->id)->where('id_equipo', $partido->id_local)->exists();
+        $tieneConvocatoriaVisitante = Convocatoria::where('id_partido', $partido->id)->where('id_equipo', $partido->id_visitante)->exists();
+
+        if (!$tieneConvocatoriaLocal || !$tieneConvocatoriaVisitante) {
+            return back()->with('error', 'No se puede validar el acta. Ambos equipos deben haber presentado su convocatoria.');
+        }
+
         // Obtener jugadores de cada equipo para calcular goles
         $jugadoresLocalIds = PlantillaJugador::where('id_equipo', $partido->id_local)
             ->where('estado', 'activo')
@@ -178,6 +205,15 @@ class PartidoController extends Controller
             // Evaluar sanciones y acumulación de partidos
             $sancionesService->evaluarAlineacionesIndebidas($partido->id);
             $sancionesService->avanzarSancionesCumplidas($partido->id);
+            
+            // Automatización: Finalizar competición si ya no quedan partidos pendientes
+            $partidosPendientes = Partido::where('id_competicion', $partido->id_competicion)
+                ->where('estado', '!=', 'jugado')
+                ->count();
+                
+            if ($partidosPendientes === 0 && $partido->competicion->estado === 'en_curso') {
+                $partido->competicion->update(['estado' => 'finalizada']);
+            }
             
             return redirect()->route('partidos.index')
                 ->with('success', "Acta validada. Resultado oficial: {$golesLocal} - {$golesVisitante} (calculado desde eventos registrados).");

@@ -132,7 +132,12 @@
                                     @endif
                                 </div>
                                 <div class="d-flex justify-content-between align-items-center fs-5">
-                                    <span>@if($esLocal) <span class="text-muted-custom">(L)</span> @else <span class="text-muted-custom">(V)</span> @endif vs {{ $rival->nombre ?? '---' }}</span>
+                                    <span>
+                                        @if($esLocal) <span class="text-muted-custom">(L)</span> @else <span class="text-muted-custom">(V)</span> @endif vs {{ $rival->nombre ?? '---' }}
+                                        @if($partido->tieneResolucionAdministrativa())
+                                            <i class="bi bi-exclamation-triangle-fill text-danger fs-6 ms-2" title="Resultado modificado por resolución administrativa (Alineación Indebida)"></i>
+                                        @endif
+                                    </span>
                                     @if($partido->estado === 'jugado') <span class="fw-bold">{{ $gF }} - {{ $gC }}</span> @else <span class="text-muted-custom">-</span> @endif
                                 </div>
                             </div>
@@ -140,6 +145,14 @@
                             <div class="p-4 text-center text-muted-custom">No hay partidos registrados.</div>
                         @endforelse
                     </div>
+                    
+                    @if($partidos->hasPages())
+                    <div class="card-footer bg-transparent border-top p-3" style="border-color: rgba(255,255,255,0.05) !important;">
+                        <div class="d-flex justify-content-center pagination-custom">
+                            {{ $partidos->links() }}
+                        </div>
+                    </div>
+                    @endif
                 </div>
             </div>
         </div>

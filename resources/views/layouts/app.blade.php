@@ -30,6 +30,8 @@
         .nav-role-badge { font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; vertical-align: middle; margin-left: 4px; }
         footer { background: var(--lm-dark); color: rgba(255,255,255,0.6); }
         .card { border: none; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
+        /* Override Bootstrap's text-muted to be legible on dark background */
+        .text-muted { color: #a0a5ba !important; }
     </style>
     @yield('styles')
 </head>

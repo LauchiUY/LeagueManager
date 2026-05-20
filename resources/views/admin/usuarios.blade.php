@@ -62,7 +62,7 @@
                                 <td>
                                     <form action="{{ route('admin.usuarios.rol', $usuario->id) }}" method="POST" class="d-flex align-items-center">
                                         @csrf
-                                        <select name="rol" class="form-select form-select-sm bg-dark text-white border-secondary me-2" style="width: 130px;">
+                                        <select name="rol" class="form-select form-select-sm bg-dark text-white border-secondary me-2" style="width: 130px;" {{ $usuario->id === Auth::id() ? 'disabled' : '' }}>
                                             <option value="jugador" {{ $usuario->rol == 'jugador' ? 'selected' : '' }}>Jugador</option>
                                             <option value="capitan" {{ $usuario->rol == 'capitan' ? 'selected' : '' }}>Capitán</option>
                                             <option value="arbitro" {{ $usuario->rol == 'arbitro' ? 'selected' : '' }}>Árbitro</option>

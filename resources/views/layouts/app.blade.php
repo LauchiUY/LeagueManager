@@ -47,10 +47,11 @@
                     <li class="nav-item">
                         <a class="nav-link" href="/"><i class="bi bi-house-fill me-1"></i>Inicio</a>
                     </li>
-                    @auth
+                    
                         <li class="nav-item">
                             <a class="nav-link" href="{{ route('clasificacion.competiciones') }}"><i class="bi bi-bar-chart-fill me-1"></i>Clasificación</a>
                         </li>
+                        @auth
                         <li class="nav-item">
                             <a class="nav-link" href="{{ route('equipos.index') }}"><i class="bi bi-shield-fill me-1"></i>Equipos</a>
                         </li>

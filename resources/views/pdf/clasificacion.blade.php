@@ -99,7 +99,7 @@
 </head>
 <body>
     <div class="header">
-        <h1>&#127942; LeagueManager</h1>
+        <h1>LeagueManager</h1>
         <p>{{ $competicion->nombre }} &mdash; {{ $competicion->deporte }}</p>
         <div class="fecha">Generado: {{ now()->format('d/m/Y H:i') }}</div>
     </div>

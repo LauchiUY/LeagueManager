@@ -254,4 +254,71 @@ class AdminController extends Controller
 
         return back()->with('success', 'Solicitud de aplazamiento procesada: ' . ucfirst($request->accion));
     }
+    /**
+     * Lista todos los usuarios para gestionar roles
+     */
+    public function usuarios()
+    {
+        $usuarios = Usuario::orderBy('rol')->orderBy('nombre')->paginate(20);
+        return view('admin.usuarios', compact('usuarios'));
+    }
+
+    /**
+     * Cambia el rol de un usuario
+     */
+    public function cambiarRol(Request $request, $id)
+    {
+        $usuario = Usuario::findOrFail($id);
+
+        $request->validate([
+            'rol' => 'required|in:admin,arbitro,capitan,jugador'
+        ]);
+
+        // Evitar que el admin se quite a sí mismo su rol
+        if ($usuario->id === Auth::id() && $request->rol !== 'admin') {
+            return back()->with('error', 'No puedes quitarte el rol de administrador a ti mismo.');
+        }
+
+        // Si el rol no cambia, no hay nada que validar
+        if ($usuario->rol === $request->rol) {
+            return back()->with('success', 'El rol de ' . $usuario->nombre . ' ya era ' . ucfirst($request->rol) . '.');
+        }
+
+        // Validar dependencias: capitán activo de un equipo
+        if ($usuario->rol === 'capitan') {
+            $registroCapitan = \App\Models\PlantillaJugador::where('id_usuario', $usuario->id)
+                ->where('es_capitan', true)
+                ->with('equipo')
+                ->first();
+
+            if ($registroCapitan) {
+                $nombreEquipo = $registroCapitan->equipo->nombre ?? 'un equipo';
+                return back()->with('error',
+                    "No se puede cambiar el rol de {$usuario->nombre}: es capitán activo de \"{$nombreEquipo}\". " .
+                    "Asigna otro capitán al equipo antes de cambiar su rol."
+                );
+            }
+        }
+
+        // Validar dependencias: árbitro con partidos pendientes
+        if ($usuario->rol === 'arbitro') {
+            $partidosPendientes = \App\Models\Partido::where('id_arbitro', $usuario->id)
+                ->whereIn('estado', ['pendiente', 'en_curso'])
+                ->count();
+
+            if ($partidosPendientes > 0) {
+                return back()->with('error',
+                    "No se puede cambiar el rol de {$usuario->nombre}: tiene {$partidosPendientes} " .
+                    ($partidosPendientes === 1 ? "partido pendiente" : "partidos pendientes") .
+                    " como árbitro. Reasigna " .
+                    ($partidosPendientes === 1 ? "ese partido" : "esos partidos") .
+                    " antes de cambiar su rol."
+                );
+            }
+        }
+
+        $usuario->update(['rol' => $request->rol]);
+
+        return back()->with('success', 'Rol de ' . $usuario->nombre . ' cambiado a ' . ucfirst($request->rol) . ' correctamente.');
+    }
 }

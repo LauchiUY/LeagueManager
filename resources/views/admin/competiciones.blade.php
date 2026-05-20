@@ -117,6 +117,7 @@
                                 <div class="mb-3">
                                     <label class="form-label">Estado</label>
                                     <select name="estado" class="form-select bg-dark text-white border-secondary" required>
+                                        <option value="pendiente" {{ $competicion->estado === 'pendiente' ? 'selected' : '' }}>Pendiente</option>
                                         <option value="en_curso" {{ $competicion->estado === 'en_curso' ? 'selected' : '' }}>En Curso</option>
                                         <option value="finalizada" {{ $competicion->estado === 'finalizada' ? 'selected' : '' }}>Finalizada</option>
                                         <option value="suspendida" {{ $competicion->estado === 'suspendida' ? 'selected' : '' }}>Suspendida</option>

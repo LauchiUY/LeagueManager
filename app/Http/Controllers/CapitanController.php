@@ -37,7 +37,7 @@ class CapitanController extends Controller
             })
             ->whereIn('estado', ['pendiente', 'en_curso'])
             ->orderBy('fecha_hora', 'asc')
-            ->get();
+            ->paginate(5);
 
         // Cargar TODAS las sanciones de los jugadores de este equipo (activas + historial)
         $jugadoresIds = $equipo->plantilla->pluck('id_usuario');
@@ -139,21 +139,10 @@ class CapitanController extends Controller
             ->delete();
 
         if ($request->has('jugadores') && is_array($request->jugadores)) {
-            // Validación server-side: rechazar jugadores con sanción activa
-            $sancionados = \App\Models\Sancion::whereIn('id_usuario', $request->jugadores)
-                ->where('estado', 'activa')
-                ->pluck('id_usuario')
-                ->toArray();
-
-            $jugadoresValidos = array_values(array_diff($request->jugadores, $sancionados));
-
-            if (count($sancionados) > 0) {
-                $nombresSancionados = \App\Models\Usuario::whereIn('id', $sancionados)->pluck('nombre')->join(', ');
-                return redirect()->back()->with('error', 'No se pueden convocar jugadores sancionados: ' . $nombresSancionados . '. Se han eliminado automáticamente de la selección.');
-            }
-
+            // Nota: Se permite guardar jugadores sancionados si vulneran el frontend (F12) 
+            // para que el SancionesService actúe en la validación del acta (Alineación indebida automática).
             $nuevasConvocatorias = [];
-            foreach ($jugadoresValidos as $jugadorId) {
+            foreach ($request->jugadores as $jugadorId) {
                 $nuevasConvocatorias[] = [
                     'id_partido' => $partidoId,
                     'id_equipo' => $equipo->id,

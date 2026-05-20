@@ -25,10 +25,9 @@ class SancionesService
             throw new Exception("El partido debe estar jugado para evaluar sanciones.");
         }
 
-        // Obtener IDs de jugadores únicos que participaron en el partido
-        $jugadoresParticipantes = $partido->eventoPartido()
-            ->whereNotNull('id_jugador')
-            ->pluck('id_jugador')
+        // Obtener IDs de jugadores únicos que participaron en el partido (fueron convocados)
+        $jugadoresParticipantes = \App\Models\Convocatoria::where('id_partido', $partidoId)
+            ->pluck('id_usuario')
             ->unique();
 
         $infraccionesPorEquipo = [
@@ -158,12 +157,22 @@ class SancionesService
      */
     public function avanzarSancionesCumplidas(int $partidoId): void
     {
-        $jugadores = EventoPartido::where('id_partido', $partidoId)
-            ->whereNotNull('id_jugador')
-            ->pluck('id_jugador')
+        $partido = Partido::findOrFail($partidoId);
+        
+        // Obtener todos los jugadores de los dos equipos
+        $jugadoresEquipos = PlantillaJugador::whereIn('id_equipo', [$partido->id_local, $partido->id_visitante])
+            ->pluck('id_usuario')
             ->unique();
+            
+        // Obtener los que jugaron (convocados)
+        $jugadoresConvocados = \App\Models\Convocatoria::where('id_partido', $partidoId)
+            ->pluck('id_usuario')
+            ->toArray();
+            
+        // Los que cumplieron sanción son los que pertenecen a los equipos pero NO fueron convocados
+        $jugadoresCumpliendo = $jugadoresEquipos->diff($jugadoresConvocados);
 
-        foreach ($jugadores as $idJugador) {
+        foreach ($jugadoresCumpliendo as $idJugador) {
             $sanciones = Sancion::where('id_usuario', $idJugador)
                 ->where('estado', 'activa')
                 ->where(function ($q) use ($partidoId) {

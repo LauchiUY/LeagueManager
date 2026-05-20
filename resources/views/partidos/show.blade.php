@@ -46,12 +46,29 @@
                 <div class="col-4">
                     <div class="d-flex justify-content-center align-items-center gap-3">
                         @php
-                            // Calcular goles actuales desde los eventos
-                            $golesLocalCalc = $partido->eventoPartido->where('tipo_evento', 'Gol')->whereIn('id_jugador', $jugadoresLocal->pluck('id_usuario'))->count();
-                            $golesVisitanteCalc = $partido->eventoPartido->where('tipo_evento', 'Gol')->whereIn('id_jugador', $jugadoresVisitante->pluck('id_usuario'))->count();
+                            // Extraer IDs de jugadores
+                            $idsLocal = $jugadoresLocal->pluck('id_usuario')->toArray();
+                            $idsVisitante = $jugadoresVisitante->pluck('id_usuario')->toArray();
                             
-                            $golesLocal = $partido->estado === 'jugado' ? $partido->goles_local : $golesLocalCalc;
-                            $golesVisitante = $partido->estado === 'jugado' ? $partido->goles_visitante : $golesVisitanteCalc;
+                            // Calcular goles reales desde los eventos (Goles a favor + Autogoles del rival)
+                            $golesLocalCalc = $partido->eventoPartido->where('tipo_evento', 'Gol')->whereIn('id_jugador', $idsLocal)->count()
+                                            + $partido->eventoPartido->where('tipo_evento', 'Autogol')->whereIn('id_jugador', $idsVisitante)->count();
+                            
+                            $golesVisitanteCalc = $partido->eventoPartido->where('tipo_evento', 'Gol')->whereIn('id_jugador', $idsVisitante)->count()
+                                                + $partido->eventoPartido->where('tipo_evento', 'Autogol')->whereIn('id_jugador', $idsLocal)->count();
+                            
+                            // Determinar si hay resolución administrativa
+                            $sancionAdministrativa = false;
+                            if ($partido->estado === 'jugado') {
+                                $golesLocal = $partido->goles_local;
+                                $golesVisitante = $partido->goles_visitante;
+                                if ($golesLocal !== $golesLocalCalc || $golesVisitante !== $golesVisitanteCalc) {
+                                    $sancionAdministrativa = true;
+                                }
+                            } else {
+                                $golesLocal = $golesLocalCalc;
+                                $golesVisitante = $golesVisitanteCalc;
+                            }
                         @endphp
                         <div class="display-3 fw-bold text-white bg-secondary bg-opacity-25 rounded px-4 py-2">{{ $golesLocal ?? 0 }}</div>
                         <div class="text-secondary fs-4">-</div>
@@ -63,6 +80,22 @@
                     <p class="text-secondary mb-0">Visitante</p>
                 </div>
             </div>
+            @if($sancionAdministrativa)
+            <div class="row mt-4 justify-content-center">
+                <div class="col-10 col-md-8">
+                    <div class="p-3 rounded-4 border d-flex align-items-center text-start" style="background: rgba(220, 53, 69, 0.1); border-color: rgba(220, 53, 69, 0.3) !important; backdrop-filter: blur(10px);">
+                        <div class="rounded-circle d-flex align-items-center justify-content-center me-3 flex-shrink-0" style="width: 45px; height: 45px; background: rgba(220, 53, 69, 0.2);">
+                            <i class="bi bi-shield-exclamation text-danger fs-5"></i>
+                        </div>
+                        <div>
+                            <div class="text-white fw-bold mb-1" style="font-family: 'Outfit', sans-serif; letter-spacing: 0.5px;">Resolución Administrativa</div>
+                            <div class="text-secondary" style="font-size: 0.85rem;">El marcador oficial fue fijado en 0-3 por sanción disciplinaria (Alineación indebida).</div>
+                            <div class="text-secondary" style="font-size: 0.75rem;"><i class="bi bi-info-circle me-1"></i>Resultado original en la cancha: {{ $golesLocalCalc }} - {{ $golesVisitanteCalc }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            @endif
         </div>
     </div>
 
@@ -70,13 +103,26 @@
         <!-- Columna Izquierda: Formularios -->
         <div class="col-lg-5">
             @if($partido->estado !== 'jugado')
-                <!-- Añadir Evento -->
-                <div class="card bg-dark border-secondary mb-4 shadow-sm">
-                    <div class="card-header border-secondary text-white bg-transparent fw-bold py-3">
-                        <i class="bi bi-plus-circle text-primary me-2"></i> Añadir Evento al Acta
+                @if(!$tieneConvocatoriaLocal || !$tieneConvocatoriaVisitante)
+                    <div class="alert alert-warning bg-warning bg-opacity-10 text-warning border-warning border-opacity-50 shadow-sm p-4 rounded-3 mb-4">
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="bi bi-exclamation-triangle-fill fs-4 me-2"></i>
+                            <h5 class="mb-0 fw-bold">Convocatorias Pendientes</h5>
+                        </div>
+                        <p class="mb-2 text-white">Para poder gestionar el acta, ambos equipos deben haber confirmado su convocatoria.</p>
+                        <ul class="list-unstyled mb-0 small">
+                            <li><i class="bi {{ $tieneConvocatoriaLocal ? 'bi-check-circle-fill text-success' : 'bi-x-circle-fill text-danger' }} me-2"></i> <strong>{{ $partido->equipoLocal ? $partido->equipoLocal->nombre : 'Local' }}</strong></li>
+                            <li><i class="bi {{ $tieneConvocatoriaVisitante ? 'bi-check-circle-fill text-success' : 'bi-x-circle-fill text-danger' }} me-2"></i> <strong>{{ $partido->equipoVisitante ? $partido->equipoVisitante->nombre : 'Visitante' }}</strong></li>
+                        </ul>
                     </div>
-                    <div class="card-body">
-                        <form action="{{ route('partidos.evento.store', $partido->id) }}" method="POST">
+                @else
+                    <!-- Añadir Evento -->
+                    <div class="card bg-dark border-secondary mb-4 shadow-sm">
+                        <div class="card-header border-secondary text-white bg-transparent fw-bold py-3">
+                            <i class="bi bi-plus-circle text-primary me-2"></i> Añadir Evento al Acta
+                        </div>
+                        <div class="card-body">
+                            <form action="{{ route('partidos.evento.store', $partido->id) }}" method="POST">
                             @csrf
                             <div class="mb-3">
                                 <label class="form-label text-secondary">Tipo de Evento</label>
@@ -154,6 +200,7 @@
                         </form>
                     </div>
                 </div>
+                @endif
             @endif
 
             <!-- Foto del Acta Física -->

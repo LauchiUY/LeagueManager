@@ -55,7 +55,7 @@ class AdminController extends Controller
         Competicion::create([
             'nombre' => $request->nombre,
             'deporte' => $request->deporte,
-            'estado' => 'en_curso',
+            'estado' => 'pendiente',
             'puntos_victoria' => $request->puntos_victoria,
             'puntos_empate' => $request->puntos_empate,
         ]);
@@ -72,7 +72,7 @@ class AdminController extends Controller
         $request->validate([
             'nombre' => 'required|string|max:255',
             'deporte' => 'required|string|max:100',
-            'estado' => 'required|in:en_curso,finalizada,suspendida',
+            'estado' => 'required|in:pendiente,en_curso,finalizada,suspendida',
             'puntos_victoria' => 'required|integer|min:0',
             'puntos_empate' => 'required|integer|min:0',
         ]);
@@ -130,7 +130,11 @@ class AdminController extends Controller
 
         try {
             $calendarioService->generarCalendario($competicion->id, $equiposIds, $fechaInicio);
-            return back()->with('success', 'Calendario generado con éxito (ida y vuelta) para los equipos seleccionados.');
+            
+            // Actualizar estado de la competición a 'en_curso' automáticamente
+            $competicion->update(['estado' => 'en_curso']);
+            
+            return back()->with('success', 'Calendario generado con éxito (ida y vuelta) para los equipos seleccionados. La competición ha pasado a estar En Curso.');
         } catch (\Exception $e) {
             return back()->with('error', 'Error al generar el calendario: ' . $e->getMessage());
         }

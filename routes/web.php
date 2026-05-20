@@ -27,12 +27,14 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/equipos/{id}', [EquipoController::class, 'show'])->name('equipos.show');
 
-    // Clasificación y estadísticas
+    
+});
+
+// Clasificación y estadísticas
     Route::get('/clasificacion', [ClasificacionController::class, 'competiciones'])->name('clasificacion.competiciones');
     Route::get('/clasificacion/{competicion}', [ClasificacionController::class, 'index'])->name('clasificacion.index');
     Route::get('/clasificacion/{competicion}/pdf', [ClasificacionController::class, 'exportPdf'])->name('clasificacion.pdf');
     Route::get('/estadisticas/equipo/{equipo}', [ClasificacionController::class, 'estadisticasEquipo'])->name('estadisticas.equipo');
-});
 
 // Rutas del Árbitro (Panel de Actas)
 Route::middleware(['auth', 'role:arbitro,admin'])->group(function () {

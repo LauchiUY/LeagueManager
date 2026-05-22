@@ -55,7 +55,8 @@ class CapitanController extends Controller
      */
     public function addJugador(Request $request)
     {
-       $request->validate([
+        // 1. Validación inicial de datos
+        $request->validate([
             'email' => 'required|email|exists:usuarios,email',
             'dorsal' => 'required|integer|min:1|max:99'
         ], [
@@ -66,15 +67,18 @@ class CapitanController extends Controller
             'dorsal.integer' => 'El dorsal debe ser un número.',
         ]);
 
+        // 2. Seguridad: Obtener el equipo del capitán logueado o dar error 404
         $equipo = Equipo::whereHas('plantilla', fn($q) => $q->where('id_usuario', Auth::id())->where('es_capitan', true))->firstOrFail();
 
-
+        // 3. Obtener los datos del jugador a fichar
         $jugador = Usuario::where('email', $request->email)->first();
 
+        // 4.rol de jugador
         if ($jugador->rol !== 'jugador') {
             return back()->with('error', 'El usuario especificado no tiene el rol de jugador.');
         }
-        // Verificar si el jugador ya está en otra plantilla activa de otro equipo
+
+        // 5. que no juegue en otro equipo a la vez
         $enOtraPlantilla = PlantillaJugador::where('id_usuario', $jugador->id)
             ->where('estado', 'activo')
             ->where('id_equipo', '!=', $equipo->id)
@@ -84,6 +88,18 @@ class CapitanController extends Controller
             return back()->with('error', 'Este jugador ya está activo en otro equipo.');
         }
 
+        // 6. nadie más en el equipo puede tener ese número
+        $dorsalOcupado = PlantillaJugador::where('id_equipo', $equipo->id)
+            ->where('estado', 'activo')
+            ->where('dorsal', $request->dorsal)
+            ->where('id_usuario', '!=', $jugador->id)
+            ->exists();
+
+        if ($dorsalOcupado) {
+            return back()->with('error', 'El dorsal ' . $request->dorsal . ' ya está siendo utilizado por otro compañero activo en tu equipo.');
+        }
+
+        // 7. Guardar en base de datos
         PlantillaJugador::updateOrCreate(
             ['id_equipo' => $equipo->id, 'id_usuario' => $jugador->id],
             ['dorsal' => $request->dorsal, 'estado' => 'activo']
@@ -151,8 +167,6 @@ class CapitanController extends Controller
             ->delete();
 
         if ($request->has('jugadores') && is_array($request->jugadores)) {
-            // Nota: Se permite guardar jugadores sancionados si vulneran el frontend (F12)
-            // para que el SancionesService actúe en la validación del acta (Alineación indebida automática).
             $nuevasConvocatorias = [];
             foreach ($request->jugadores as $jugadorId) {
                 $nuevasConvocatorias[] = [

@@ -19,7 +19,7 @@ class CapitanController extends Controller
     public function miEquipo()
     {
         $user = Auth::user();
-        
+
         $equipo = Equipo::with(['plantilla.usuario.sanciones' => function($q) {
             $q->where('estado', 'activa');
         }])->whereHas('plantilla', function($q) use ($user) {
@@ -55,18 +55,25 @@ class CapitanController extends Controller
      */
     public function addJugador(Request $request)
     {
-        $request->validate([
+       $request->validate([
             'email' => 'required|email|exists:usuarios,email',
             'dorsal' => 'required|integer|min:1|max:99'
+        ], [
+            'email.required' => 'El correo electrónico es obligatorio.',
+            'email.email' => 'Debes introducir un formato de correo válido.',
+            'email.exists' => 'No hemos encontrado ningún jugador con ese correo en el sistema.',
+            'dorsal.required' => 'El dorsal es obligatorio.',
+            'dorsal.integer' => 'El dorsal debe ser un número.',
         ]);
 
         $equipo = Equipo::whereHas('plantilla', fn($q) => $q->where('id_usuario', Auth::id())->where('es_capitan', true))->firstOrFail();
+
+
         $jugador = Usuario::where('email', $request->email)->first();
 
         if ($jugador->rol !== 'jugador') {
             return back()->with('error', 'El usuario especificado no tiene el rol de jugador.');
         }
-
         // Verificar si el jugador ya está en otra plantilla activa de otro equipo
         $enOtraPlantilla = PlantillaJugador::where('id_usuario', $jugador->id)
             ->where('estado', 'activo')
@@ -91,7 +98,12 @@ class CapitanController extends Controller
     public function removeJugador($idJugador)
     {
         $equipo = Equipo::whereHas('plantilla', fn($q) => $q->where('id_usuario', Auth::id())->where('es_capitan', true))->firstOrFail();
-        
+
+        // Evitar que el capitán se borre a sí mismo de la plantilla
+        if ((int) $idJugador === Auth::id()) {
+            return back()->with('error', 'No puedes darte de baja a ti mismo. Eres el capitán del equipo.');
+        }
+
         PlantillaJugador::where('id_equipo', $equipo->id)
             ->where('id_usuario', $idJugador)
             ->update(['estado' => 'inactivo']);
@@ -139,7 +151,7 @@ class CapitanController extends Controller
             ->delete();
 
         if ($request->has('jugadores') && is_array($request->jugadores)) {
-            // Nota: Se permite guardar jugadores sancionados si vulneran el frontend (F12) 
+            // Nota: Se permite guardar jugadores sancionados si vulneran el frontend (F12)
             // para que el SancionesService actúe en la validación del acta (Alineación indebida automática).
             $nuevasConvocatorias = [];
             foreach ($request->jugadores as $jugadorId) {

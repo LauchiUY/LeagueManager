@@ -116,7 +116,7 @@ class AdminController extends Controller
     {
         $competicion = Competicion::findOrFail($id);
         $equiposIds = $competicion->equipos()->pluck('equipos.id')->toArray();
-        
+
         if (count($equiposIds) < 2) {
             return back()->with('error', 'Se necesitan al menos 2 equipos asignados para generar el calendario.');
         }
@@ -130,10 +130,10 @@ class AdminController extends Controller
 
         try {
             $calendarioService->generarCalendario($competicion->id, $equiposIds, $fechaInicio);
-            
+
             // Actualizar estado de la competición a 'en_curso' automáticamente
             $competicion->update(['estado' => 'en_curso']);
-            
+
             return back()->with('success', 'Calendario generado con éxito (ida y vuelta) para los equipos seleccionados. La competición ha pasado a estar En Curso.');
         } catch (\Exception $e) {
             return back()->with('error', 'Error al generar el calendario: ' . $e->getMessage());
@@ -159,6 +159,13 @@ class AdminController extends Controller
     {
         $partido = Partido::findOrFail($id);
         $request->validate(['id_arbitro' => 'required|exists:usuarios,id']);
+
+        // Validar que el usuario seleccionado sea realmente un árbitro
+        $arbitro = Usuario::findOrFail($request->id_arbitro);
+        if ($arbitro->rol !== 'arbitro') {
+            return back()->with('error', 'El usuario seleccionado no tiene el rol de árbitro.');
+        }
+
         $partido->update(['id_arbitro' => $request->id_arbitro]);
         return back()->with('success', 'Árbitro asignado correctamente.');
     }
@@ -242,9 +249,9 @@ class AdminController extends Controller
     {
         $aplazamiento = \App\Models\Aplazamiento::findOrFail($id);
         $request->validate(['accion' => 'required|in:aprobado,rechazado']);
-        
+
         $aplazamiento->update(['estado' => $request->accion]);
-        
+
         if ($request->accion === 'aprobado') {
             $aplazamiento->partido->update(['estado' => 'aplazado']);
         }
@@ -254,6 +261,7 @@ class AdminController extends Controller
 
         return back()->with('success', 'Solicitud de aplazamiento procesada: ' . ucfirst($request->accion));
     }
+
     /**
      * Lista todos los usuarios para gestionar roles
      */
@@ -300,16 +308,16 @@ class AdminController extends Controller
             }
         }
 
-        // Validar dependencias: árbitro con partidos pendientes
+        // Validar dependencias: árbitro con partidos pendientes o aplazados
         if ($usuario->rol === 'arbitro') {
             $partidosPendientes = \App\Models\Partido::where('id_arbitro', $usuario->id)
-                ->whereIn('estado', ['pendiente', 'en_curso'])
+                ->whereIn('estado', ['pendiente', 'en_curso', 'aplazado'])
                 ->count();
 
             if ($partidosPendientes > 0) {
                 return back()->with('error',
                     "No se puede cambiar el rol de {$usuario->nombre}: tiene {$partidosPendientes} " .
-                    ($partidosPendientes === 1 ? "partido pendiente" : "partidos pendientes") .
+                    ($partidosPendientes === 1 ? "partido pendiente o aplazado" : "partidos pendientes o aplazados") .
                     " como árbitro. Reasigna " .
                     ($partidosPendientes === 1 ? "ese partido" : "esos partidos") .
                     " antes de cambiar su rol."
@@ -320,5 +328,45 @@ class AdminController extends Controller
         $usuario->update(['rol' => $request->rol]);
 
         return back()->with('success', 'Rol de ' . $usuario->nombre . ' cambiado a ' . ucfirst($request->rol) . ' correctamente.');
+    }
+
+    /**
+     * Elimina un usuario del sistema verificando restricciones de integridad.
+     */
+    public function eliminarUsuario($id)
+    {
+        $usuario = Usuario::findOrFail($id);
+
+        // Evitar que el admin se borre a sí mismo
+        if ($usuario->id === Auth::id()) {
+            return back()->with('error', 'No puedes eliminar tu propia cuenta de administrador.');
+        }
+
+        // 1. ESCUDO PARA ÁRBITROS
+        if ($usuario->rol === 'arbitro') {
+            $partidosAsignados = \App\Models\Partido::where('id_arbitro', $usuario->id)->count();
+
+            if ($partidosAsignados > 0) {
+                return back()->with('error',
+                    "No puedes eliminar a {$usuario->nombre}: tiene {$partidosAsignados} partidos asignados en el sistema (historial o pendientes). Reasígnalos primero."
+                );
+            }
+        }
+
+        // 2. ESCUDO PARA CAPITANES
+        if ($usuario->rol === 'capitan') {
+            $esCapitan = \App\Models\PlantillaJugador::where('id_usuario', $usuario->id)
+                ->where('es_capitan', true)
+                ->exists();
+
+            if ($esCapitan) {
+                return back()->with('error', "No puedes eliminar a {$usuario->nombre} porque es el capitán activo de un equipo. Asigna otro capitán primero.");
+            }
+        }
+
+        // Si pasa las validaciones, lo borramos
+        $usuario->delete();
+
+        return back()->with('success', 'Usuario eliminado correctamente del sistema.');
     }
 }

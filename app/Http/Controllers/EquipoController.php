@@ -29,6 +29,12 @@ class EquipoController extends Controller
             'id_capitan' => 'required|exists:usuarios,id',
         ]);
 
+        // Validar que el usuario seleccionado como capitán tenga realmente el rol de capitán
+        $nuevoCapitan = \App\Models\Usuario::findOrFail($request->id_capitan);
+        if ($nuevoCapitan->rol !== 'capitan') {
+            return back()->with('error', 'El usuario seleccionado no tiene el rol de capitán en el sistema.');
+        }
+
         $equipo = Equipo::create([
             'nombre' => $request->nombre,
             'logo_url' => 'default.png',
@@ -79,6 +85,12 @@ class EquipoController extends Controller
             'id_capitan' => 'required|exists:usuarios,id',
             'puntos_sancion' => 'required|integer|min:0'
         ]);
+
+        // Validar que el usuario seleccionado como capitán tenga realmente el rol de capitán
+        $nuevoCapitan = \App\Models\Usuario::findOrFail($request->id_capitan);
+        if ($nuevoCapitan->rol !== 'capitan') {
+            return back()->with('error', 'El usuario seleccionado no tiene el rol de capitán en el sistema.');
+        }
 
         $equipo->update([
             'nombre' => $request->nombre,

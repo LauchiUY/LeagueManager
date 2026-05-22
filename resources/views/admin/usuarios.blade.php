@@ -47,6 +47,31 @@
                                 <td class="text-secondary">#{{ $usuario->id }}</td>
                                 <td>
                                     <strong>{{ $usuario->nombre }}</strong>
+
+                                    {{-- Indicadores visuales de dependencias --}}
+                                    @if($usuario->rol === 'capitan')
+                                        @php
+                                            $esCapitanActivo = \App\Models\PlantillaJugador::where('id_usuario', $usuario->id)
+                                                ->where('es_capitan', true)
+                                                ->exists();
+                                        @endphp
+                                        @if($esCapitanActivo)
+                                            <span class="badge bg-warning text-dark ms-2" title="Capitán activo en un equipo (No se puede cambiar el rol)">
+                                                <i class="bi bi-shield-fill"></i> Activo
+                                            </span>
+                                        @endif
+                                    @elseif($usuario->rol === 'arbitro')
+                                        @php
+                                            $partidosPendientesArbitro = \App\Models\Partido::where('id_arbitro', $usuario->id)
+                                                ->whereIn('estado', ['pendiente', 'en_curso', 'aplazado'])
+                                                ->count();
+                                        @endphp
+                                        @if($partidosPendientesArbitro > 0)
+                                            <span class="badge bg-info text-dark ms-2" title="Tiene {{ $partidosPendientesArbitro }} partido(s) asignado(s) (No se puede cambiar el rol)">
+                                                <i class="bi bi-clock-fill"></i> {{ $partidosPendientesArbitro }} partido(s)
+                                            </span>
+                                        @endif
+                                    @endif
                                 </td>
                                 <td class="text-secondary">{{ $usuario->email }}</td>
                                 <td>

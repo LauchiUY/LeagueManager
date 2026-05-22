@@ -73,11 +73,15 @@
                                         </td>
                                         <td><span class="badge bg-success">Activo</span></td>
                                         <td class="text-end">
-                                            <form action="{{ route('capitan.jugador.remove', $plantillaJugador->usuario->id) }}" method="POST" onsubmit="return confirm('¿Seguro que deseas dar de baja a este jugador?');">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-person-dash"></i></button>
-                                            </form>
+                                            @if($plantillaJugador->es_capitan)
+                                                <span class="badge bg-warning text-dark"><i class="bi bi-shield-fill me-1"></i>Capitán</span>
+                                            @else
+                                                <form action="{{ route('capitan.jugador.remove', $plantillaJugador->usuario->id) }}" method="POST" onsubmit="return confirm('¿Seguro que deseas dar de baja a este jugador?');">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-person-dash"></i></button>
+                                                </form>
+                                            @endif
                                         </td>
                                     </tr>
                                 @empty

@@ -68,6 +68,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
 
     Route::get('/partidos', [AdminController::class, 'partidos'])->name('partidos');
     Route::post('/partidos/{id}/arbitro', [AdminController::class, 'asignarArbitro'])->name('partidos.arbitro');
+    Route::post('/partidos/{id}/reprogramar', [AdminController::class, 'reprogramarPartido'])->name('partidos.reprogramar');
 
     Route::get('/sanciones', [AdminController::class, 'sanciones'])->name('sanciones');
     Route::post('/sanciones/crear', [AdminController::class, 'crearSancion'])->name('sanciones.crear');

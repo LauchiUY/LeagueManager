@@ -239,7 +239,8 @@ class AdminController extends Controller
             ->orderByRaw("FIELD(estado, 'pendiente', 'aprobado', 'rechazado')")
             ->orderBy('created_at', 'desc')
             ->paginate(15);
-        return view('admin.aplazamientos', compact('aplazamientos'));
+        $arbitros = Usuario::where('rol', 'arbitro')->orderBy('nombre')->get();
+        return view('admin.aplazamientos', compact('aplazamientos', 'arbitros'));
     }
 
     /**
@@ -260,6 +261,29 @@ class AdminController extends Controller
         $aplazamiento->solicitante->notify(new \App\Notifications\AplazamientoResueltoNotification($aplazamiento));
 
         return back()->with('success', 'Solicitud de aplazamiento procesada: ' . ucfirst($request->accion));
+    }
+
+    /**
+     * Reprograma un partido aplazado
+     */
+    public function reprogramarPartido(Request $request, $id)
+    {
+        $partido = Partido::findOrFail($id);
+        
+        $request->validate([
+            'fecha_hora' => 'required|date|after:now',
+            'campo_pista' => 'required|string|max:100',
+            'id_arbitro' => 'required|exists:usuarios,id',
+        ]);
+
+        $partido->update([
+            'fecha_hora' => $request->fecha_hora,
+            'campo_pista' => $request->campo_pista,
+            'id_arbitro' => $request->id_arbitro,
+            'estado' => 'pendiente', // Vuelve a estar disponible en el calendario de juego
+        ]);
+
+        return back()->with('success', 'Partido reprogramado con éxito. Ha vuelto a estar activo en el calendario.');
     }
 
     /**

@@ -70,6 +70,8 @@ class CalendarioService
         // Guardamos copia del orden original para poder restaurarlo
         $equiposOriginal = $equipos;
 
+        $arbitroIndex = 0; // Para distribuir equitativamente los partidos entre todos los árbitros
+
         // --- PRIMERA VUELTA (IDA) ---
         for ($j = 0; $j < $totalJornadasIda; $j++) {
             // Calcular fecha de esta jornada: semana base + offset aleatorio en días preferidos
@@ -90,7 +92,7 @@ class CalendarioService
             }
 
             // Asignar horarios y árbitros a los partidos de esta jornada
-            $asignaciones = $this->asignarArbitrosYHorarios($partidosJornada, $fechaJornada, $arbitros, $horariosDisponibles, $pistas);
+            $asignaciones = $this->asignarArbitrosYHorarios($partidosJornada, $fechaJornada, $arbitros, $horariosDisponibles, $pistas, $arbitroIndex);
 
             foreach ($asignaciones as $asignacion) {
                 $partidosToInsert[] = [
@@ -135,7 +137,7 @@ class CalendarioService
                 }
             }
 
-            $asignaciones = $this->asignarArbitrosYHorarios($partidosJornada, $fechaJornada, $arbitros, $horariosDisponibles, $pistas);
+            $asignaciones = $this->asignarArbitrosYHorarios($partidosJornada, $fechaJornada, $arbitros, $horariosDisponibles, $pistas, $arbitroIndex);
 
             foreach ($asignaciones as $asignacion) {
                 $partidosToInsert[] = [
@@ -197,12 +199,11 @@ class CalendarioService
      * Asigna árbitros y horarios a los partidos de una jornada
      * garantizando que no haya conflictos (mismo árbitro a la misma hora).
      */
-    private function asignarArbitrosYHorarios(array $partidosJornada, Carbon $fechaJornada, array $arbitros, array $horariosDisponibles, array $pistas): array
+    private function asignarArbitrosYHorarios(array $partidosJornada, Carbon $fechaJornada, array $arbitros, array $horariosDisponibles, array $pistas, int &$arbitroIndex): array
     {
         $resultado = [];
         // Llevar registro de qué árbitro está asignado a qué horario
         $arbitroOcupado = []; // ['arbitroId_horaIndex' => true]
-        $arbitroIndex = 0;
         
         shuffle($horariosDisponibles); // Aleatorizar horarios
         $pistasDisponibles = $pistas;
